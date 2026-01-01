@@ -54,6 +54,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
     width: 120px; text-align: right; border-bottom: 2px solid transparent; transition: 0.3s;
 }
 .hl-input:not([readonly]) { border-bottom-color: var(--primary); background: rgba(0,0,0,0.2); }
+.hl-input:focus { outline: none; }
 .hl-hint { font-size: 0.8rem; color: var(--dim); margin-top: 5px; text-align: right; }
 
 /* LISTA */
@@ -93,6 +94,11 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .date-col { font-weight: 600; font-size: 0.8rem; }
 .cost-col { font-weight: 700; text-align: right; color: var(--primary); }
 
+/* ÉLŐ SOR STÍLUS */
+.live-row { background: rgba(59, 130, 246, 0.1); animation: pulse 2s infinite; }
+.live-row td { color: white !important; border-bottom: 2px solid var(--primary); }
+@keyframes pulse { 0% { background: rgba(59, 130, 246, 0.1); } 50% { background: rgba(59, 130, 246, 0.2); } 100% { background: rgba(59, 130, 246, 0.1); } }
+
 /* GOMBOK */
 .fab-group { position: fixed; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 100; }
 .btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: pointer; }
@@ -104,20 +110,17 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
 /* ========================================= */
-/* PRÉMIUM PDF DESIGN (SZÍNES + PROFI)       */
+/* PRÉMIUM PDF DESIGN                        */
 /* ========================================= */
 .pdf-export-mode {
     background: #ffffff !important;
     padding: 20px !important;
     color: #1e293b !important;
-    -webkit-print-color-adjust: exact !important; /* Színek kényszerítése */
+    -webkit-print-color-adjust: exact !important;
 }
 .pdf-export-mode .header { margin-bottom: 30px !important; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; }
 .pdf-export-mode h1 { 
-    font-size: 2rem !important; 
-    background: none !important; 
-    -webkit-text-fill-color: #1e293b !important; 
-    color: #1e293b !important;
+    font-size: 2rem !important; background: none !important; -webkit-text-fill-color: #1e293b !important; color: #1e293b !important;
 }
 .pdf-export-mode .subtitle { 
     font-size: 1.1rem !important; color: #3b82f6 !important; font-weight: 900 !important; margin-top: 5px;
@@ -128,22 +131,15 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
     box-shadow: none !important;
     margin-bottom: 20px !important;
     border-radius: 8px !important;
-    page-break-inside: avoid !important; /* Egyben tartja a kártyát */
+    page-break-inside: avoid !important;
 }
 .pdf-export-mode .card-title { color: #475569 !important; border-bottom: 1px solid #cbd5e1 !important; }
 .pdf-export-mode input { color: #0f172a !important; border: none !important; font-weight: 800 !important; }
 
 /* Kiemelések PDF-ben */
-.pdf-export-mode .highlight-row { 
-    background: #eff6ff !important; border: 1px solid #bfdbfe !important; 
-}
+.pdf-export-mode .highlight-row { background: #eff6ff !important; border: 1px solid #bfdbfe !important; }
 .pdf-export-mode .hl-label { color: #2563eb !important; }
-.pdf-export-mode .hl-hint strong { color: #2563eb !important; }
-
-.pdf-export-mode .total-box {
-    background: #fffbeb !important; border: 2px solid #f59e0b !important; color: #000 !important;
-    page-break-inside: avoid !important;
-}
+.pdf-export-mode .total-box { background: #fffbeb !important; border: 2px solid #f59e0b !important; color: #000 !important; page-break-inside: avoid !important; }
 .pdf-export-mode .total-label { color: #b45309 !important; font-size: 1rem !important; }
 .pdf-export-mode .total-amount { color: #b45309 !important; text-shadow: none !important; font-size: 3rem !important; }
 
@@ -152,6 +148,7 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode th { background: #e2e8f0 !important; color: #475569 !important; font-weight: 800 !important; border: 1px solid #cbd5e1; }
 .pdf-export-mode td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
 .pdf-export-mode .cost-col { color: #2563eb !important; }
+.pdf-export-mode .live-row { background: #dbeafe !important; border-bottom: 2px solid #2563eb !important; } /* PDF-ben is jelöljük a mostanit */
 
 /* Rejtendő elemek exportkor */
 .pdf-export-mode .edit-btn, 
@@ -213,7 +210,7 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             </div>
             <div class="mvm-field">
                 <label>Jelenlegi</label>
-                <input type="number" id="mvmCurr" placeholder="..." oninput="calcMvm()">
+                <input type="number" id="mvmCurr" placeholder="..." oninput="updateTable()">
             </div>
             <div class="mvm-stat">
                 <span>Fogy: <span id="mvmCons" class="stat-val">0</span> kWh</span>
@@ -254,7 +251,8 @@ const MVM_LIMIT = 210; const P_REZSI = 36.386; const P_PIACI = 70.104;
 
 const now = new Date();
 const monthNames = ["JANUÁR","FEBRUÁR","MÁRCIUS","ÁPRILIS","MÁJUS","JÚNIUS","JÚLIUS","AUGUSZTUS","SZEPTEMBER","OKTÓBER","NOVEMBER","DECEMBER"];
-document.getElementById('currentMonthDate').innerText = `${now.getFullYear()}. ${monthNames[now.getMonth()]}`;
+const currentMonthStr = `${now.getFullYear()}. ${monthNames[now.getMonth()]}`;
+document.getElementById('currentMonthDate').innerText = currentMonthStr;
 
 // INPUTOK
 let savedInputs = JSON.parse(localStorage.getItem('expense_settings')) || {};
@@ -294,13 +292,49 @@ const defaultHistory = [
 ];
 let historyLog = JSON.parse(localStorage.getItem('secure_history_v1')) || defaultHistory;
 
-function renderHistory() {
+// Ez fut le minden gombnyomásra
+function updateTable() {
     const tbody = document.getElementById('mvmHistoryBody');
     tbody.innerHTML = '';
+
+    // 1. ÉLŐ SOR (A mostani bevitel)
+    const curr = parseFloat(document.getElementById('mvmCurr').value);
+    const prev = parseFloat(document.getElementById('mvmPrev').value);
+    
+    // Számolás
+    let liveCost = 0;
+    let liveCons = 0;
+    let hasLiveInput = false;
+
+    if(curr && curr > prev) {
+        liveCons = curr - prev;
+        if(liveCons <= MVM_LIMIT) liveCost = liveCons * P_REZSI;
+        else liveCost = (MVM_LIMIT * P_REZSI) + ((liveCons - MVM_LIMIT) * P_PIACI);
+        hasLiveInput = true;
+    }
+    
+    // UI frissítés
+    document.getElementById('mvmCons').innerText = liveCons;
+    document.getElementById('mvmCostDisp').innerText = formatMoney(liveCost);
+
+    // HA VAN BEÍRVA VALAMI, AKKOR MUTATJUK AZ ÉLŐ SORT
+    if(hasLiveInput || curr > 0) {
+        tbody.innerHTML += `
+        <tr class="live-row">
+            <td>
+                <strong>${currentMonthStr}</strong><br>
+                <span style="font-size:0.7rem; opacity:0.8; text-transform:uppercase;">(Jelenlegi)</span>
+            </td>
+            <td><strong>${curr || '...'}</strong></td>
+            <td class="cost-col"><strong>${formatMoney(liveCost)}</strong></td>
+        </tr>`;
+    }
+
+    // 2. MENTETT ELŐZMÉNYEK
     [...historyLog].reverse().forEach(row => {
-        // CSAK 3 OSZLOP: Dátum, Óra, Ár
         tbody.innerHTML += `<tr><td class="date-col">${row.date}</td><td>${row.read}</td><td class="cost-col">${Math.round(row.cost).toLocaleString()} Ft</td></tr>`;
     });
+
     if(historyLog.length > 0) document.getElementById('mvmPrev').value = historyLog[historyLog.length-1].read;
 }
 
@@ -316,18 +350,8 @@ function calc() {
     document.getElementById('grandTotal').innerText = formatMoney(grand);
     return grand;
 }
-function calcMvm() {
-    const prev = parseFloat(document.getElementById('mvmPrev').value);
-    const curr = parseFloat(document.getElementById('mvmCurr').value);
-    if(curr > prev) {
-        const cons = curr - prev;
-        document.getElementById('mvmCons').innerText = cons;
-        let cost = (cons <= MVM_LIMIT) ? cons * P_REZSI : (MVM_LIMIT * P_REZSI) + ((cons - MVM_LIMIT) * P_PIACI);
-        document.getElementById('mvmCostDisp').innerText = formatMoney(cost);
-        return { cons, cost };
-    }
-    document.getElementById('mvmCons').innerText = "0"; document.getElementById('mvmCostDisp').innerText = "0 Ft"; return null;
-}
+// Régi calcMvm helyett most az updateTable hívódik meg
+function calcMvm() { updateTable(); } 
 
 // MENTÉS
 function saveInputs() {
@@ -338,21 +362,31 @@ function saveInputs() {
 }
 function save() {
     if(!confirm("Biztosan mented? Az adatok véglegesek lesznek.")) return;
-    const mvmData = calcMvm();
-    const momPays = calc();
+    
     const currMvm = parseFloat(document.getElementById('mvmCurr').value);
     const prevMvm = parseFloat(document.getElementById('mvmPrev').value);
     
-    if(currMvm && currMvm > prevMvm && mvmData) {
-        historyLog.push({ date: new Date().toISOString().split('T')[0], read: currMvm, cons: mvmData.cons, cost: mvmData.cost, momTotal: momPays });
+    // Újra kiszámoljuk a mentéshez
+    let cost = 0;
+    let cons = 0;
+    if(currMvm > prevMvm) {
+        cons = currMvm - prevMvm;
+        cost = (cons <= MVM_LIMIT) ? cons * P_REZSI : (MVM_LIMIT * P_REZSI) + ((cons - MVM_LIMIT) * P_PIACI);
+    }
+    
+    const momPays = calc();
+    
+    if(currMvm && currMvm > prevMvm) {
+        historyLog.push({ date: new Date().toISOString().split('T')[0], read: currMvm, cons: cons, cost: cost, momTotal: momPays });
         localStorage.setItem('secure_history_v1', JSON.stringify(historyLog));
-        renderHistory();
+        
         document.getElementById('mvmCurr').value = "";
+        updateTable(); // Frissítjük a táblát (eltűnik az élő sor, bekerül a mentettbe)
         alert("Sikeres mentés!");
     } else { alert("Mentsd el! (De előbb írj be új óraállást!)"); }
 }
 
-// --- SZÍNES PDF GENERÁLÁS (JAVÍTOTT) ---
+// --- SZÍNES PDF GENERÁLÁS ---
 function sharePDF() {
     const element = document.getElementById('contentToShare');
     const overlay = document.getElementById('loadingOverlay');
@@ -363,7 +397,7 @@ function sharePDF() {
     editBtn.style.display = 'none'; 
 
     const opt = {
-        margin: [5, 5, 5, 5], // Pici margó körbe
+        margin: [5, 5, 5, 5],
         filename: `Csaladi_Elszamolas_${now.getFullYear()}_${now.getMonth()+1}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
@@ -387,7 +421,7 @@ function sharePDF() {
     });
 }
 
-renderHistory();
+updateTable();
 calc();
 </script>
 </body>
