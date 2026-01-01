@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MVM Pro Kalkulátor</title>
+<style>
+:root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --primary: #3b82f6;
+    --accent: #f59e0b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --text: #f8fafc;
+    --text-dim: #94a3b8;
+    --border: rgba(255,255,255,0.08);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    margin: 0; padding: 15px; min-height: 100vh;
+    padding-bottom: 100px; /* Hely a gombnak */
+}
+
+/* HEADER */
+.header { text-align: center; margin-bottom: 25px; padding-top: 10px; }
+.header h1 {
+    font-size: 1.8rem; margin: 0; font-weight: 900;
+    background: linear-gradient(to right, var(--primary), #60a5fa);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.header p { color: var(--text-dim); margin: 5px 0 0; font-size: 0.85rem; }
+
+/* KÁRTYÁK */
+.card {
+    background: var(--card); border-radius: 24px; padding: 24px;
+    margin-bottom: 20px; border: 1px solid var(--border);
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+}
+.card-title {
+    font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.card-title i { color: var(--accent); }
+
+/* INPUTOK */
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+.input-group label {
+    display: block; font-size: 0.7rem; color: var(--text-dim);
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;
+}
+.input-field {
+    width: 100%; background: #0b1120; border: 1px solid var(--border);
+    color: white; padding: 12px; font-size: 1.1rem; border-radius: 12px;
+    font-weight: 700; text-align: center; transition: 0.2s;
+}
+.input-field:focus { border-color: var(--primary); outline: none; }
+.input-field.filled { border-color: var(--success); background: rgba(16, 185, 129, 0.05); }
+
+/* EREDMÉNY KIJELZŐ */
+.result-display {
+    text-align: center; padding: 20px; border-radius: 16px;
+    background: linear-gradient(145deg, rgba(59,130,246,0.1), rgba(15,23,42,0.5));
+    border: 1px solid rgba(59,130,246,0.2); margin-top: 20px;
+}
+.main-cost { font-size: 2.4rem; font-weight: 900; color: white; margin: 5px 0; letter-spacing: -1px; }
+.sub-info { font-size: 0.85rem; color: var(--text-dim); display: flex; justify-content: center; gap: 15px; }
+.sub-item span { font-weight: 700; color: white; }
+
+/* CSÚSZKA (Anyu) */
+.slider-box {
+    background: rgba(0,0,0,0.2); border-radius: 16px; padding: 15px; margin-top: 20px;
+}
+.slider-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+input[type=range] {
+    width: 100%; height: 6px; background: #334155; border-radius: 10px; appearance: none;
+}
+input[type=range]::-webkit-slider-thumb {
+    appearance: none; width: 22px; height: 22px; background: var(--accent); border-radius: 50%; 
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); cursor: pointer;
+}
+.share-values { display: flex; justify-content: space-between; margin-top: 8px; font-size: 1rem; font-weight: 700; }
+
+/* TÁBLÁZAT */
+.history-wrapper { overflow-x: auto; margin: -10px; }
+table { width: 100%; border-collapse: collapse; min-width: 300px; }
+th { text-align: left; font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); padding: 15px; border-bottom: 1px solid var(--border); }
+td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: #cbd5e1; }
+tr:last-child td { border: none; }
+.row-date { font-weight: 700; color: white; display: block; }
+.row-reading { font-size: 0.8rem; color: var(--text-dim); }
+.val-high { color: var(--danger); font-weight: 700; }
+.val-low { color: var(--success); font-weight: 700; }
+.cost-cell { text-align: right; font-weight: 700; color: var(--primary); }
+
+/* MENTÉS GOMB */
+.fab {
+    position: fixed; bottom: 30px; right: 30px;
+    background: linear-gradient(135deg, var(--primary), #2563eb);
+    color: white; width: 64px; height: 64px; border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; box-shadow: 0 10px 40px rgba(37,99,235,0.4);
+    border: 1px solid rgba(255,255,255,0.2); cursor: pointer; z-index: 100;
+    transition: transform 0.2s;
+}
+.fab:active { transform: scale(0.9); }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>MVM <span style="color:var(--accent)">PRO</span></h1>
+    <p>Rezsicsökkentett Kalkulátor</p>
+</div>
+
+<div class="card">
+    <div class="card-title"><i>⚡</i> Aktuális Állás</div>
+    
+    <div class="input-row">
+        <div class="input-group">
+            <label>Előző (kWh)</label>
+            <input type="number" id="prevRead" class="input-field" readonly>
+        </div>
+        <div class="input-group">
+            <label>Jelenlegi (kWh)</label>
+            <input type="number" id="currRead" class="input-field" placeholder="..." oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="result-display">
+        <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:5px;">FIZETENDŐ ÖSSZEG</div>
+        <div class="main-cost" id="totalCost">0 Ft</div>
+        <div class="sub-info">
+            <div class="sub-item">Fogyasztás: <span id="consDisplay">0</span> kWh</div>
+        </div>
+    </div>
+
+    <div class="slider-box">
+        <div class="slider-header">
+            <span style="color:var(--text-dim)">KÖLTSÉG MEGOSZTÁSA</span>
+            <span style="color:var(--accent); font-weight:bold;">Anyu: <span id="momPercentDisp">50</span>%</span>
+        </div>
+        <input type="range" id="splitSlider" min="0" max="100" value="50" oninput="calculate()">
+        <div class="share-values">
+            <div style="color:var(--accent)" id="momPay">0 Ft</div>
+            <div style="color:white" id="myPay">0 Ft</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title"><i>📅</i> Előzmények</div>
+    <div class="history-wrapper">
+        <table id="historyTable">
+            <thead>
+                <tr>
+                    <th>Dátum</th>
+                    <th>Fogyasztás</th>
+                    <th style="text-align:right">Költség</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<button class="fab" onclick="saveEntry()">💾</button>
+
+<script>
+// --- KONFIGURÁCIÓ ---
+const LIMIT = 210;       
+const P_REZSI = 36.386;  
+const P_PIACI = 70.104;
+
+// ALAP ADATOK (Excelből kinyerve)
+const defaultData = [
+    { id: 1, date: '2025-09-01', month: 'Augusztus', read: 17232, cons: 351, cost: 17527 },
+    { id: 2, date: '2025-10-01', month: 'Szeptember', read: 17583, cons: 231, cost: 9123 },
+    { id: 3, date: '2025-11-01', month: 'Október', read: 17814, cons: 557, cost: 32001 },
+    { id: 4, date: '2025-12-01', month: 'November', read: 18372, cons: 861, cost: 53284 },
+    { id: 5, date: '2026-01-01', month: 'December', read: 19233, cons: 861, cost: 53284 } 
+    // December javítva a 19233 alapján (kb. ugyanannyi fogyasztás jött ki)
+];
+
+let history = [];
+
+// --- LOGIKA ---
+
+function init() {
+    // Adatok betöltése localStorage-ból, ha van
+    const saved = localStorage.getItem('mvm_history_v1');
+    if (saved) {
+        history = JSON.parse(saved);
+    } else {
+        history = defaultData; // Ha nincs, akkor az alap Excel adatokat használjuk
+    }
+    
+    renderHistory();
+    setPrevReading();
+}
+
+function setPrevReading() {
+    // Az utolsó bejegyzés óraállása lesz az "Előző"
+    if(history.length > 0) {
+        const last = history[history.length - 1];
+        document.getElementById('prevRead').value = last.read;
+    } else {
+        document.getElementById('prevRead').value = 0;
+    }
+}
+
+function formatMoney(num) {
+    return Math.round(num).toLocaleString('hu-HU') + " Ft";
+}
+
+function calculate() {
+    const prev = parseFloat(document.getElementById('prevRead').value) || 0;
+    const curr = parseFloat(document.getElementById('currRead').value);
+    const splitPct = parseInt(document.getElementById('splitSlider').value);
+
+    // Csúszka százalék frissítése
+    document.getElementById('momPercentDisp').innerText = splitPct;
+    
+    // Ha üres vagy kisebb, nullázunk
+    if (!curr || curr <= prev) {
+        document.getElementById('totalCost').innerText = "0 Ft";
+        document.getElementById('consDisplay').innerText = "0";
+        document.getElementById('momPay').innerText = "0 Ft";
+        document.getElementById('myPay').innerText = "0 Ft";
+        document.getElementById('currRead').classList.remove('filled');
+        return;
+    }
+
+    document.getElementById('currRead').classList.add('filled');
+
+    const cons = curr - prev;
+    document.getElementById('consDisplay').innerText = cons.toFixed(0);
+
+    // Költség számítás
+    let cost = 0;
+    if (cons <= LIMIT) {
+        cost = cons * P_REZSI;
+    } else {
+        cost = (LIMIT * P_REZSI) + ((cons - LIMIT) * P_PIACI);
+    }
+
+    document.getElementById('totalCost').innerText = formatMoney(cost);
+
+    // Megosztás
+    const momShare = cost * (splitPct / 100);
+    const myShare = cost - momShare;
+
+    document.getElementById('momPay').innerText = formatMoney(momShare);
+    document.getElementById('myPay').innerText = formatMoney(myShare);
+
+    return { cons, cost }; // Visszaadjuk a mentéshez
+}
+
+function saveEntry() {
+    const calc = calculate();
+    const curr = parseFloat(document.getElementById('currRead').value);
+    
+    if (!calc || !curr) {
+        alert("Kérlek írj be egy érvényes óraállást!");
+        return;
+    }
+
+    if (confirm("Biztosan menteni szeretnéd ezt a hónapot?")) {
+        const now = new Date();
+        const monthNames = ["Január","Február","Március","Április","Május","Június","Július","Augusztus","Szeptember","Október","November","December"];
+        
+        const newEntry = {
+            id: Date.now(),
+            date: now.toISOString().split('T')[0],
+            month: monthNames[now.getMonth()],
+            read: curr,
+            cons: calc.cons,
+            cost: calc.cost
+        };
+
+        history.push(newEntry);
+        
+        // MENTÉS A TELEFON MEMÓRIÁJÁBA
+        localStorage.setItem('mvm_history_v1', JSON.stringify(history));
+        
+        // Reset
+        document.getElementById('currRead').value = "";
+        calculate(); // Nullázza a kijelzőt
+        init(); // Újrarajzolja a listát és beállítja az új "Előző" értéket
+        
+        alert("Sikeres mentés!");
+    }
+}
+
+function renderHistory() {
+    const tbody = document.getElementById('historyBody');
+    tbody.innerHTML = '';
+
+    // Fordított sorrend: legújabb felül
+    [...history].reverse().forEach(row => {
+        const isHigh = row.cons > LIMIT;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <span class="row-date">${row.month}</span>
+                <span class="row-reading">${row.date}</span>
+            </td>
+            <td>
+                <span class="${isHigh ? 'val-high' : 'val-low'}">${Math.round(row.cons)} kWh</span>
+                <br><span style="font-size:0.7rem; color:#64748b">Óra: ${row.read}</span>
+            </td>
+            <td class="cost-cell">${formatMoney(row.cost)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Start
+init();
+
+</script>
+</body>
+</html>
