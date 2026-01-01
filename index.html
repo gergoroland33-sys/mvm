@@ -108,51 +108,47 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 /* ========================================= */
 .pdf-export-mode {
     background: #ffffff !important;
-    padding: 30px !important;
+    padding: 20px !important;
     color: #1e293b !important;
+    -webkit-print-color-adjust: exact !important; /* Színek kényszerítése */
 }
-.pdf-export-mode .header { margin-bottom: 40px !important; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; }
+.pdf-export-mode .header { margin-bottom: 30px !important; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; }
 .pdf-export-mode h1 { 
-    font-size: 2.2rem !important; 
+    font-size: 2rem !important; 
     background: none !important; 
     -webkit-text-fill-color: #1e293b !important; 
     color: #1e293b !important;
-    text-transform: uppercase; letter-spacing: 1px;
 }
 .pdf-export-mode .subtitle { 
-    font-size: 1.2rem !important; 
-    color: #3b82f6 !important;
-    font-weight: 900 !important;
-    margin-top: 10px;
+    font-size: 1.1rem !important; color: #3b82f6 !important; font-weight: 900 !important; margin-top: 5px;
 }
 .pdf-export-mode .card {
     background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
     box-shadow: none !important;
-    margin-bottom: 25px !important;
-    border-radius: 12px !important;
+    margin-bottom: 20px !important;
+    border-radius: 8px !important;
+    page-break-inside: avoid !important; /* Egyben tartja a kártyát */
 }
-.pdf-export-mode .card-title { color: #64748b !important; border-bottom: 1px solid #cbd5e1 !important; }
+.pdf-export-mode .card-title { color: #475569 !important; border-bottom: 1px solid #cbd5e1 !important; }
 .pdf-export-mode input { color: #0f172a !important; border: none !important; font-weight: 800 !important; }
 
-/* Színes kiemelések PDF-ben is */
+/* Kiemelések PDF-ben */
 .pdf-export-mode .highlight-row { 
-    background: #eff6ff !important;
-    border: 1px solid #bfdbfe !important; 
+    background: #eff6ff !important; border: 1px solid #bfdbfe !important; 
 }
 .pdf-export-mode .hl-label { color: #2563eb !important; }
 .pdf-export-mode .hl-hint strong { color: #2563eb !important; }
 
 .pdf-export-mode .total-box {
-    background: #fffbeb !important;
-    border: 2px solid #f59e0b !important;
-    color: #000 !important;
+    background: #fffbeb !important; border: 2px solid #f59e0b !important; color: #000 !important;
+    page-break-inside: avoid !important;
 }
-.pdf-export-mode .total-label { color: #b45309 !important; font-size: 1.1rem !important; }
-.pdf-export-mode .total-amount { color: #b45309 !important; text-shadow: none !important; font-size: 3.5rem !important; }
+.pdf-export-mode .total-label { color: #b45309 !important; font-size: 1rem !important; }
+.pdf-export-mode .total-amount { color: #b45309 !important; text-shadow: none !important; font-size: 3rem !important; }
 
 /* Táblázat PDF stílus */
-.pdf-export-mode table { width: 100%; border: 1px solid #cbd5e1 !important; }
+.pdf-export-mode table { width: 100%; border: 1px solid #cbd5e1 !important; margin-top: 10px; }
 .pdf-export-mode th { background: #e2e8f0 !important; color: #475569 !important; font-weight: 800 !important; border: 1px solid #cbd5e1; }
 .pdf-export-mode td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
 .pdf-export-mode .cost-col { color: #2563eb !important; }
@@ -168,7 +164,7 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 
 <div id="loadingOverlay">
     <div class="spinner"></div>
-    <div>PDF Összeállítása...</div>
+    <div>PDF Készítése...</div>
 </div>
 
 <div id="contentToShare">
@@ -230,8 +226,8 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
                 <tr>
                     <th>Dátum</th>
                     <th>Óraállás</th>
-                    <th style="text-align:right">MVM Ár</th>
-                    </tr>
+                    <th style="text-align:right">Becsült Ár</th>
+                </tr>
             </thead>
             <tbody id="mvmHistoryBody"></tbody>
         </table>
@@ -302,8 +298,8 @@ function renderHistory() {
     const tbody = document.getElementById('mvmHistoryBody');
     tbody.innerHTML = '';
     [...historyLog].reverse().forEach(row => {
-        // "Anyu Utalt" eltávolítva a renderelésből
-        tbody.innerHTML += `<tr><td class="date-col">${row.date}</td><td>${row.read}</td><td class="cost-col">${Math.round(row.cost).toLocaleString()}</td></tr>`;
+        // CSAK 3 OSZLOP: Dátum, Óra, Ár
+        tbody.innerHTML += `<tr><td class="date-col">${row.date}</td><td>${row.read}</td><td class="cost-col">${Math.round(row.cost).toLocaleString()} Ft</td></tr>`;
     });
     if(historyLog.length > 0) document.getElementById('mvmPrev').value = historyLog[historyLog.length-1].read;
 }
@@ -356,7 +352,7 @@ function save() {
     } else { alert("Mentsd el! (De előbb írj be új óraállást!)"); }
 }
 
-// --- SZÍNES PDF GENERÁLÁS ---
+// --- SZÍNES PDF GENERÁLÁS (JAVÍTOTT) ---
 function sharePDF() {
     const element = document.getElementById('contentToShare');
     const overlay = document.getElementById('loadingOverlay');
@@ -367,10 +363,10 @@ function sharePDF() {
     editBtn.style.display = 'none'; 
 
     const opt = {
-        margin: 0,
+        margin: [5, 5, 5, 5], // Pici margó körbe
         filename: `Csaladi_Elszamolas_${now.getFullYear()}_${now.getMonth()+1}.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, useCORS: true },
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
         pagebreak: { mode: ['avoid-all', 'css'] },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
