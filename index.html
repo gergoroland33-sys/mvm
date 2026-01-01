@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Családi Elszámolás</title>
+<title>Biztonságos Családi Elszámolás</title>
 <style>
 :root {
     --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --accent: #f59e0b;
@@ -12,7 +12,7 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
     font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text);
-    margin: 0; padding: 15px; padding-bottom: 100px;
+    margin: 0; padding: 15px; padding-bottom: 120px;
 }
 
 /* HEADER */
@@ -31,7 +31,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 }
 .card-title i { font-style: normal; font-size: 1.2rem; }
 
-/* VILLANY ÁTALÁNY (Kiemelt) */
+/* VILLANY ÁTALÁNY */
 .highlight-row {
     background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary);
     border-radius: 12px; padding: 15px; margin-bottom: 20px;
@@ -45,7 +45,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .hl-input:focus { outline: none; background: rgba(0,0,0,0.2); }
 .hl-hint { font-size: 0.8rem; color: var(--dim); margin-top: 5px; text-align: right; }
 
-/* EGYÉB TÉTELEK LISTÁJA */
+/* LISTA */
 .expense-item {
     display: flex; justify-content: space-between; align-items: center;
     padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.1);
@@ -68,16 +68,19 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .total-label { color: var(--accent); font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 .total-amount { font-size: 2.8rem; font-weight: 900; color: white; margin: 5px 0; text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
 
-/* MVM NAPLÓ TÁBLÁZAT */
+/* MVM NAPLÓ */
 .mvm-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
 .mvm-field label { display: block; font-size: 0.7rem; color: var(--dim); margin-bottom: 3px; }
 .mvm-field input { width: 100%; background: transparent; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; font-weight: bold; text-align: center; }
+.mvm-stat { grid-column: span 2; display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; font-size: 0.85rem; }
+.stat-val { font-weight: 800; color: var(--primary); }
 
 table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 th { text-align: left; color: var(--dim); padding: 8px; border-bottom: 1px solid var(--border); font-size: 0.7rem; text-transform: uppercase; }
 td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; }
-.date-col { font-weight: 600; color: var(--primary); }
-.val-col { font-weight: 700; text-align: right; }
+.date-col { font-weight: 600; font-size: 0.8rem; }
+.cost-col { font-weight: 700; text-align: right; color: var(--primary); }
+.mom-col { font-weight: 700; text-align: right; color: var(--accent); }
 
 /* GOMBOK */
 .fab-group {
@@ -93,19 +96,17 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .btn-primary { background: var(--primary); border-color: var(--primary); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
 .btn:active { transform: scale(0.95); }
 
-/* PDF NYOMTATÁSI NÉZET */
+/* PDF NÉZET */
 @media print {
     body { background: white; color: black; padding: 0; }
-    .card { border: 1px solid #ddd; box-shadow: none; background: white; color: black; break-inside: avoid; margin-bottom: 10px; }
+    .card { border: 1px solid #ddd; box-shadow: none; background: white; color: black; break-inside: avoid; margin-bottom: 15px; }
     input { color: black !important; border-bottom: 1px solid #ccc !important; }
     .total-box { background: #f8f8f8; border: 2px solid black; }
     .total-amount { color: black !important; text-shadow: none; }
     .fab-group, .subtitle { display: none; }
     h1 { -webkit-text-fill-color: black; color: black; }
-    
-    /* Táblázat nyomtatása */
-    table { border: 1px solid #ddd; }
-    th, td { border: 1px solid #eee; color: black; }
+    table { border: 1px solid #ddd; width: 100%; }
+    th, td { border: 1px solid #eee; color: black; padding: 5px; }
     .mvm-mini { background: #f9f9f9; border: 1px solid #ddd; }
 }
 </style>
@@ -113,7 +114,7 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 <body>
 
 <div class="header">
-    <h1>HAVI ELSZÁMOLÁS</h1>
+    <h1>CSALÁDI ELSZÁMOLÁS</h1>
     <div class="subtitle" id="currentMonthDate">2026</div>
 </div>
 
@@ -125,7 +126,7 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
         <div class="hl-input-group">
             <span>Összeg:</span>
             <div>
-                <input type="number" id="villanyTotal" class="hl-input" value="55000" oninput="calc()">
+                <input type="number" id="villanyTotal" class="hl-input" value="55000" oninput="saveInputs()">
                 <span style="font-weight:bold">Ft</span>
             </div>
         </div>
@@ -143,7 +144,7 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 </div>
 
 <div class="card">
-    <div class="card-title"><i>📝</i> MVM Részletező (Napló)</div>
+    <div class="card-title"><i>📝</i> Napló & Előzmények</div>
     
     <div class="mvm-mini">
         <div class="mvm-field">
@@ -154,8 +155,10 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             <label>Jelenlegi</label>
             <input type="number" id="mvmCurr" placeholder="..." oninput="calcMvm()">
         </div>
-        <div style="grid-column:span 2; text-align:center; font-size:0.8rem; color:var(--dim); margin-top:5px;">
-            Fogyasztás: <strong id="mvmCons">0</strong> kWh
+        
+        <div class="mvm-stat">
+            <span>Fogyasztás: <span id="mvmCons" class="stat-val">0</span> kWh</span>
+            <span>MVM Becsült: <span id="mvmCostDisp" class="stat-val" style="color:var(--accent)">0 Ft</span></span>
         </div>
     </div>
 
@@ -164,7 +167,8 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             <tr>
                 <th>Dátum</th>
                 <th>Óraállás</th>
-                <th style="text-align:right">Fogyasztás</th>
+                <th style="text-align:right">MVM Ár</th>
+                <th style="text-align:right">Anyu Utal</th>
             </tr>
         </thead>
         <tbody id="mvmHistoryBody">
@@ -178,8 +182,8 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 </div>
 
 <script>
-// --- ADATOK ---
-const FIX_ITEMS = [
+// --- KONFIGURÁCIÓ ---
+const DEFAULT_ITEMS = [
     { id: 'tv', name: 'TV Előfizetés', val: 7142 },
     { id: 'tel', name: 'Telefon', val: 4500 },
     { id: 'net', name: 'Internet', val: 2880 },
@@ -189,128 +193,173 @@ const FIX_ITEMS = [
     { id: 'komm', name: 'Kommunális adó', val: 600 },
 ];
 
+const MVM_LIMIT = 210; 
+const P_REZSI = 36.386;
+const P_PIACI = 70.104;
+
 const now = new Date();
 const monthNames = ["Január","Február","Március","Április","Május","Június","Július","Augusztus","Szeptember","Október","November","December"];
 document.getElementById('currentMonthDate').innerText = `${now.getFullYear()}. ${monthNames[now.getMonth()]}`.toUpperCase();
 
-// LISTA GENERÁLÁSA
+// --- 1. KÖLTSÉGEK BETÖLTÉSE (MEMÓRIÁBÓL) ---
+// Megnézzük, van-e mentett beállítás, ha nincs, a DEFAULT-ot használjuk
+let savedInputs = JSON.parse(localStorage.getItem('expense_settings')) || {};
+let villanyVal = savedInputs['villanyTotal'] || 55000;
+document.getElementById('villanyTotal').value = villanyVal;
+
 const listContainer = document.getElementById('expenseList');
-FIX_ITEMS.forEach(item => {
+DEFAULT_ITEMS.forEach(item => {
+    // Ha a felhasználó átírta már, azt töltjük be
+    let currentVal = savedInputs[item.id] !== undefined ? savedInputs[item.id] : item.val;
+    
     const div = document.createElement('div');
     div.className = 'expense-item';
     div.innerHTML = `
         <span class="ex-name">${item.name}</span>
         <div>
-            <input type="number" class="ex-input" id="inp_${item.id}" value="${item.val}" oninput="calc()">
+            <input type="number" class="ex-input" id="inp_${item.id}" value="${currentVal}" oninput="saveInputs()">
             <span style="font-size:0.8rem; color:#94a3b8">Ft</span>
         </div>
     `;
     listContainer.appendChild(div);
 });
 
-// --- MVM ELŐZMÉNYEK BETÖLTÉSE ---
-// Alap adatok az Excelből, ha még üres
-const defaultMvmData = [
-    { date: '2025-09-01', read: 17232, cons: 351 },
-    { date: '2025-10-01', read: 17583, cons: 231 },
-    { date: '2025-11-01', read: 17814, cons: 557 },
-    { date: '2025-12-01', read: 18372, cons: 861 }
+// --- 2. ELŐZMÉNYEK BETÖLTÉSE ---
+const defaultHistory = [
+    { date: '2025-09-01', read: 17232, cons: 351, cost: 17528, momTotal: 34000 },
+    { date: '2025-10-01', read: 17583, cons: 231, cost: 9123, momTotal: 34000 },
+    { date: '2025-11-01', read: 17814, cons: 557, cost: 32002, momTotal: 34000 },
+    { date: '2025-12-01', read: 18372, cons: 861, cost: 53284, momTotal: 34000 }
 ];
 
-let mvmHistory = JSON.parse(localStorage.getItem('mvm_log_final_v2'));
-if (!mvmHistory) {
-    mvmHistory = defaultMvmData;
+// Biztonságos kulcsot használunk (secure_v1)
+let historyLog = JSON.parse(localStorage.getItem('secure_history_v1'));
+if (!historyLog) {
+    historyLog = defaultHistory;
 }
 
-// Táblázat kirajzolása
 function renderHistory() {
     const tbody = document.getElementById('mvmHistoryBody');
     tbody.innerHTML = '';
     
-    // Fordított sorrend (legújabb felül)
-    [...mvmHistory].reverse().forEach(row => {
+    [...historyLog].reverse().forEach(row => {
+        let momDisplay = row.momTotal ? Math.round(row.momTotal).toLocaleString() + " Ft" : "-";
+        
         tbody.innerHTML += `
             <tr>
                 <td class="date-col">${row.date}</td>
                 <td>${row.read}</td>
-                <td class="val-col">${row.cons} kWh</td>
+                <td class="cost-col">${Math.round(row.cost).toLocaleString()}</td>
+                <td class="mom-col">${momDisplay}</td>
             </tr>
         `;
     });
 
-    // Az utolsó bejegyzés a "Fix Előző"
-    if(mvmHistory.length > 0) {
-        document.getElementById('mvmPrev').value = mvmHistory[mvmHistory.length-1].read;
+    if(historyLog.length > 0) {
+        document.getElementById('mvmPrev').value = historyLog[historyLog.length-1].read;
     }
 }
 
-// --- SZÁMOLÁS ---
+// --- 3. SZÁMOLÁS ---
 function formatMoney(num) {
     return Math.round(num).toLocaleString('hu-HU') + " Ft";
 }
 
 function calc() {
-    // 1. Villany felezés
-    const villanyTotal = parseFloat(document.getElementById('villanyTotal').value) || 0;
-    const villanyShare = villanyTotal / 2;
-    document.getElementById('villanyHalf').innerText = formatMoney(villanyShare);
+    // Villany
+    const vTot = parseFloat(document.getElementById('villanyTotal').value) || 0;
+    const vShare = vTot / 2;
+    document.getElementById('villanyHalf').innerText = formatMoney(vShare);
 
-    // 2. Egyéb fix tételek
-    let othersTotal = 0;
-    FIX_ITEMS.forEach(item => {
+    // Többi
+    let others = 0;
+    DEFAULT_ITEMS.forEach(item => {
         const val = parseFloat(document.getElementById(`inp_${item.id}`).value) || 0;
-        othersTotal += val;
+        others += val;
     });
 
-    // 3. Végösszeg
-    const grandTotal = villanyShare + othersTotal;
-    document.getElementById('grandTotal').innerText = formatMoney(grandTotal);
+    const grand = vShare + others;
+    document.getElementById('grandTotal').innerText = formatMoney(grand);
+    return grand; // Visszaadjuk a mentéshez
 }
 
 function calcMvm() {
     const prev = parseFloat(document.getElementById('mvmPrev').value);
     const curr = parseFloat(document.getElementById('mvmCurr').value);
+    
     if(curr > prev) {
-        document.getElementById('mvmCons').innerText = (curr - prev);
+        const cons = curr - prev;
+        document.getElementById('mvmCons').innerText = cons;
+        
+        let cost = 0;
+        if(cons <= MVM_LIMIT) cost = cons * P_REZSI;
+        else cost = (MVM_LIMIT * P_REZSI) + ((cons - MVM_LIMIT) * P_PIACI);
+        
+        document.getElementById('mvmCostDisp').innerText = formatMoney(cost);
+        return { cons, cost };
     } else {
         document.getElementById('mvmCons').innerText = "0";
+        document.getElementById('mvmCostDisp').innerText = "0 Ft";
+        return null;
     }
 }
 
-// --- MENTÉS (Biztonságos) ---
-function save() {
-    if(confirm("Biztosan mented a hónapot? Ezt később nem tudod törölni!")) {
-        const currMvm = parseFloat(document.getElementById('mvmCurr').value);
-        const prevMvm = parseFloat(document.getElementById('mvmPrev').value);
-        
-        let msg = "Pénzügyi adatok rendben.";
+// --- 4. AUTOMATA MENTÉS (INPUTOK) ---
+// Ha átírsz egy árat (pl. TV), azonnal elmenti, hogy legközelebb is ez legyen
+function saveInputs() {
+    calc(); // Újraszámolunk
+    
+    let inputsToSave = {};
+    inputsToSave['villanyTotal'] = parseFloat(document.getElementById('villanyTotal').value);
+    
+    DEFAULT_ITEMS.forEach(item => {
+        inputsToSave[item.id] = parseFloat(document.getElementById(`inp_${item.id}`).value);
+    });
+    
+    localStorage.setItem('expense_settings', JSON.stringify(inputsToSave));
+}
 
-        // Ha írt be új óraállást, azt is mentjük
-        if(currMvm && currMvm > prevMvm) {
-            const today = new Date().toISOString().split('T')[0];
-            const cons = currMvm - prevMvm;
-            
-            mvmHistory.push({
-                date: today,
-                read: currMvm,
-                cons: cons
-            });
-            
-            localStorage.setItem('mvm_log_final_v2', JSON.stringify(mvmHistory));
-            renderHistory();
-            document.getElementById('mvmCurr').value = "";
-            document.getElementById('mvmCons').innerText = "0";
-            msg += "\n+ Új MVM óraállás rögzítve!";
-        }
+// --- 5. HÓNAP MENTÉSE (VÉGLEGESÍTÉS) ---
+function save() {
+    // 1. Megkérdezzük
+    if(!confirm("Biztosan mented a hónapot?\n\nFIGYELEM: A mentett adatokat nem lehet törölni!")) {
+        return;
+    }
+    
+    // 2. Adatok gyűjtése
+    const mvmData = calcMvm();
+    const momPays = calc(); // A fő végösszeg
+    const currMvm = parseFloat(document.getElementById('mvmCurr').value);
+    const prevMvm = parseFloat(document.getElementById('mvmPrev').value);
+    
+    // Csak akkor mentünk új sort, ha van új óraállás
+    if(currMvm && currMvm > prevMvm && mvmData) {
+        const today = new Date().toISOString().split('T')[0];
         
-        alert(msg);
+        historyLog.push({
+            date: today,
+            read: currMvm,
+            cons: mvmData.cons,
+            cost: mvmData.cost,     // MVM becsült költség
+            momTotal: momPays       // AMIT ANYU UTALT (A legfontosabb!)
+        });
+        
+        localStorage.setItem('secure_history_v1', JSON.stringify(historyLog));
+        
+        renderHistory();
+        document.getElementById('mvmCurr').value = "";
+        document.getElementById('mvmCons').innerText = "0";
+        document.getElementById('mvmCostDisp').innerText = "0 Ft";
+        
+        alert("Sikeres mentés!\nAz adatok rögzítve a naplóban.");
+    } else {
+        alert("Hiba: Kérlek adj meg érvényes új óraállást a mentéshez!");
     }
 }
 
 // Init
 renderHistory();
 calc();
-
 </script>
 </body>
 </html>
