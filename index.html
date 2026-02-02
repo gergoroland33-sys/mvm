@@ -1,517 +1,326 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Családi Elszámolás Pro</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Családi Elszámolás Pro v2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f1a; --card: #161e2d; --primary: #3b82f6; --accent: #f59e0b;
+            --text: #f8fafc; --dim: #94a3b8; --border: #2d3748; --success: #10b981;
+            --danger: #ef4444; --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 120px; line-height: 1.5; }
 
-<style>
-:root {
-    --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --accent: #f59e0b;
-    --text: #f8fafc; --dim: #94a3b8; --border: #334155; --success: #10b981;
-    --danger: #ef4444; /* Piros a piaci árhoz */
-}
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body {
-    font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text);
-    margin: 0; padding: 15px; padding-bottom: 120px;
-}
+        /* HEADER */
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 10px 5px; }
+        h1 { margin: 0; font-size: 1.4rem; font-weight: 900; letter-spacing: -0.5px; background: linear-gradient(135deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .date-badge { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; }
 
-/* HEADER & REFRESH */
-.header-container { position: relative; margin-bottom: 25px; text-align: center; }
-.header { transition: 0.3s; }
-h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.subtitle { font-size: 0.8rem; color: var(--dim); margin-top: 5px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        /* KÁRTYA DESIGN */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-title { font-size: 0.85rem; font-weight: 800; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
 
-.refresh-btn {
-    position: absolute; top: 0; right: 0;
-    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-    color: var(--dim); width: 35px; height: 35px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 1.2rem; transition: all 0.3s ease;
-}
-.refresh-btn:active { transform: rotate(180deg) scale(0.9); background: var(--primary); color: white; border-color: var(--primary); }
+        /* SZÁMOK ÉS INPUTOK */
+        .highlight-box { background: rgba(0,0,0,0.2); border-radius: 16px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .main-val { font-size: 2rem; font-weight: 900; color: white; display: flex; align-items: baseline; gap: 5px; }
+        .main-val span { font-size: 1rem; color: var(--dim); }
 
-/* KÁRTYÁK */
-.card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 20px;
-    padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-.card-title {
-    font-size: 0.9rem; font-weight: 700; color: var(--dim); text-transform: uppercase;
-    margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; 
-    border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
-}
-.title-left { display: flex; align-items: center; gap: 8px; }
+        .expense-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .expense-name { font-weight: 600; color: #e2e8f0; }
+        .expense-input-wrapper { display: flex; align-items: center; gap: 8px; }
+        .val-input { background: transparent; border: none; color: var(--accent); font-weight: 800; font-size: 1.1rem; width: 85px; text-align: right; outline: none; transition: 0.3s; }
+        .val-input:not([readonly]) { background: rgba(245, 158, 11, 0.1); border-radius: 6px; padding: 2px 5px; }
 
-/* SZERKESZTÉS GOMB */
-.edit-btn {
-    background: transparent; border: 1px solid var(--dim); color: var(--dim);
-    padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer;
-    display: flex; align-items: center; gap: 5px; transition: 0.2s;
-}
-.edit-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(245, 158, 11, 0.1); }
+        /* MVM PROGRESS BAR */
+        .progress-container { margin: 20px 0; }
+        .progress-labels { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+        .bar-bg { height: 12px; background: #1e293b; border-radius: 6px; overflow: hidden; display: flex; }
+        .bar-rezsi { height: 100%; background: var(--success); transition: 0.5s ease; }
+        .bar-piaci { height: 100%; background: var(--danger); transition: 0.5s ease; }
+        
+        /* ÖSSZESÍTŐ BOX */
+        .summary-card { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border: none; color: white; text-align: center; position: relative; overflow: hidden; }
+        .summary-card::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); }
+        .summary-label { font-size: 0.8rem; font-weight: 700; opacity: 0.9; text-transform: uppercase; }
+        .summary-amount { font-size: 3rem; font-weight: 900; margin: 10px 0; letter-spacing: -1px; }
 
-/* VILLANY ÁTALÁNY */
-.highlight-row {
-    background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary);
-    border-radius: 12px; padding: 15px; margin-bottom: 20px;
-}
-.hl-label { font-size: 0.8rem; font-weight: 700; color: var(--primary); display: block; margin-bottom: 5px; text-transform: uppercase; }
-.hl-input-group { display: flex; align-items: center; justify-content: space-between; }
-.hl-input {
-    background: transparent; border: none; color: white; font-size: 1.5rem; font-weight: 900;
-    width: 120px; text-align: right; border-bottom: 2px solid transparent; transition: 0.3s;
-}
-.hl-input:not([readonly]) { border-bottom-color: var(--primary); background: rgba(0,0,0,0.2); }
-.hl-input:focus { outline: none; }
-.hl-hint { font-size: 0.8rem; color: var(--dim); margin-top: 5px; text-align: right; }
+        /* TÁBLÁZAT */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; font-size: 0.65rem; color: var(--dim); text-transform: uppercase; padding: 10px 5px; }
+        td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+        .badge-rezsi { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .badge-piaci { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
 
-/* LISTA */
-.expense-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.1);
-}
-.ex-name { font-weight: 500; font-size: 0.95rem; }
-.ex-input {
-    width: 90px; background: transparent; border: none; color: white;
-    font-weight: 700; text-align: right; font-size: 1rem;
-    border-bottom: 1px solid transparent; transition: 0.2s; padding: 5px 0; opacity: 0.8;
-}
-.ex-input:not([readonly]) { 
-    border-bottom-color: var(--accent); color: var(--accent); opacity: 1; 
-    background: rgba(255,255,255,0.05); border-radius: 4px; padding-right: 5px;
-}
+        /* FLOATING ACTION BUTTONS */
+        .actions { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 1000; width: 90%; max-width: 400px; }
+        .btn { flex: 1; padding: 16px; border-radius: 18px; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); transition: 0.2s; }
+        .btn-save { background: white; color: black; }
+        .btn-pdf { background: var(--primary); color: white; }
+        .btn:active { transform: scale(0.95); }
 
-/* ÖSSZESÍTÉS */
-.total-box {
-    background: linear-gradient(145deg, rgba(245, 158, 11, 0.1), rgba(15,23,42,0.8));
-    border: 1px solid var(--accent); border-radius: 20px; padding: 25px; text-align: center;
-}
-.total-label { color: var(--accent); font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-.total-amount { font-size: 2.8rem; font-weight: 900; color: white; margin: 5px 0; text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+        /* EDIT TOGGLE */
+        .edit-toggle { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--dim); padding: 6px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+        .edit-toggle.active { border-color: var(--accent); color: var(--accent); }
 
-/* MVM NAPLÓ & TÁBLÁZAT */
-.mvm-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-.mvm-field label { display: block; font-size: 0.7rem; color: var(--dim); margin-bottom: 3px; }
-.mvm-field input { width: 100%; background: transparent; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; font-weight: bold; text-align: center; }
-
-/* Új MVM Statisztika elrendezés */
-.mvm-stat-container {
-    grid-column: span 2; 
-    border-top: 1px solid rgba(255,255,255,0.1); 
-    margin-top: 10px; 
-    padding-top: 10px;
-}
-.mvm-stat-row {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
-}
-.stat-main { font-weight: 800; font-size: 1rem; color: var(--accent); }
-.stat-sub { font-size: 0.75rem; color: var(--dim); display: block; text-align: right; }
-.split-val { color: var(--success); } /* Rezsi szín */
-.split-val.over { color: var(--danger); } /* Piaci szín */
-
-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-th { text-align: left; color: var(--dim); padding: 8px; border-bottom: 1px solid var(--border); font-size: 0.7rem; text-transform: uppercase; }
-td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; vertical-align: top; }
-.date-col { font-weight: 600; font-size: 0.8rem; }
-.cons-col { text-align: right; color: var(--dim); font-size: 0.8rem; }
-.cost-col { font-weight: 700; text-align: right; color: var(--primary); }
-
-/* Részletező szöveg a táblázatban */
-.breakdown-text { font-size: 0.65rem; color: var(--dim); display: block; margin-top: 2px; font-weight: normal; }
-.breakdown-split { color: var(--success); }
-.breakdown-over { color: var(--danger); }
-
-/* ÉLŐ SOR STÍLUS */
-.live-row { background: rgba(59, 130, 246, 0.1); animation: pulse 2s infinite; }
-.live-row td { color: white !important; border-bottom: 2px solid var(--primary); }
-@keyframes pulse { 0% { background: rgba(59, 130, 246, 0.1); } 50% { background: rgba(59, 130, 246, 0.2); } 100% { background: rgba(59, 130, 246, 0.1); } }
-
-/* GOMBOK */
-.fab-group { position: fixed; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 100; }
-.btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: pointer; }
-.btn-primary { background: var(--primary); border-color: var(--primary); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
-
-/* LOADING */
-#loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; align-items: center; justify-content: center; flex-direction: column; color: white; }
-.spinner { width: 40px; height: 40px; border: 4px solid #fff; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-
-/* ========================================= */
-/* PRÉMIUM PDF DESIGN                        */
-/* ========================================= */
-.pdf-export-mode {
-    background: #ffffff !important;
-    padding: 20px !important;
-    color: #1e293b !important;
-    -webkit-print-color-adjust: exact !important;
-}
-.pdf-export-mode .header { margin-bottom: 30px !important; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; }
-.pdf-export-mode h1 { font-size: 2rem !important; background: none !important; -webkit-text-fill-color: #1e293b !important; color: #1e293b !important; }
-.pdf-export-mode .subtitle { font-size: 1.1rem !important; color: #3b82f6 !important; font-weight: 900 !important; margin-top: 5px; }
-.pdf-export-mode .card {
-    background: #f8fafc !important; border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important; margin-bottom: 20px !important;
-    border-radius: 8px !important; page-break-inside: avoid !important;
-}
-.pdf-export-mode .card-title { color: #475569 !important; border-bottom: 1px solid #cbd5e1 !important; }
-.pdf-export-mode input { color: #0f172a !important; border: none !important; font-weight: 800 !important; }
-
-.pdf-export-mode .highlight-row { background: #eff6ff !important; border: 1px solid #bfdbfe !important; }
-.pdf-export-mode .hl-label { color: #2563eb !important; }
-.pdf-export-mode .total-box { background: #fffbeb !important; border: 2px solid #f59e0b !important; color: #000 !important; page-break-inside: avoid !important; }
-.pdf-export-mode .total-label { color: #b45309 !important; font-size: 1rem !important; }
-.pdf-export-mode .total-amount { color: #b45309 !important; text-shadow: none !important; font-size: 3rem !important; }
-
-.pdf-export-mode table { width: 100%; border: 1px solid #cbd5e1 !important; margin-top: 10px; }
-.pdf-export-mode th { background: #e2e8f0 !important; color: #475569 !important; font-weight: 800 !important; border: 1px solid #cbd5e1; }
-.pdf-export-mode td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
-.pdf-export-mode .cost-col { color: #2563eb !important; }
-.pdf-export-mode .live-row { background: #dbeafe !important; border-bottom: 2px solid #2563eb !important; }
-
-/* Színek a PDF-ben a részletezéshez */
-.pdf-export-mode .breakdown-split { color: #059669 !important; } /* Rezsi zöld */
-.pdf-export-mode .breakdown-over { color: #dc2626 !important; } /* Piaci piros */
-
-.pdf-export-mode .edit-btn, .pdf-export-mode .fab-group, .pdf-export-mode .refresh-btn, .pdf-export-mode .mvm-mini { display: none !important; } 
-
-</style>
+        /* LOADING */
+        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
+        
+        /* PDF EXPORT MODE STYLES */
+        .pdf-mode { background: white !important; color: #0f172a !important; padding: 40px !important; }
+        .pdf-mode .card { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; }
+        .pdf-mode .summary-card { background: #1e293b !important; }
+        .pdf-mode .val-input, .pdf-mode .main-val { color: #0f172a !important; }
+        .pdf-mode .edit-toggle, .pdf-mode .actions, .pdf-mode .mvm-inputs-row { display: none !important; }
+    </style>
 </head>
 <body>
 
-<div id="loadingOverlay">
-    <div class="spinner"></div>
-    <div>PDF Készítése...</div>
-</div>
+<div id="loader"><div style="width:40px;height:40px;border:4px solid var(--primary);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite"></div><p>PDF Generálása...</p></div>
 
-<div id="contentToShare">
+<div id="app-content">
     <div class="header-container">
-        <div class="header">
-            <h1>CSALÁDI ELSZÁMOLÁS</h1>
-            <div class="subtitle" id="currentMonthDate">2026. JANUÁR</div>
-        </div>
-        <button class="refresh-btn" onclick="location.reload()" title="Oldal frissítése">↻</button>
+        <h1>ELSZÁMOLÁS PRO</h1>
+        <div class="date-badge" id="currentDate">2026. JANUÁR</div>
+    </div>
+
+    <div class="card summary-card">
+        <div class="summary-label">Fizetendő összesen (Anyu)</div>
+        <div class="summary-amount" id="grandTotal">0 Ft</div>
+        <div style="font-size: 0.75rem; opacity: 0.8; font-weight: 600;">Minden rezsi költséggel együtt</div>
     </div>
 
     <div class="card">
-        <div class="card-title">
-            <div class="title-left"><i>💰</i> HAVI KÖLTSÉGEK</div>
-            <button class="edit-btn" id="editBtn" onclick="toggleEdit()"><span>🔒 ZÁRVA</span></button>
-        </div>
-
-        <div class="highlight-row">
-            <span class="hl-label">⚡ Villany (Átalány) - Teljes</span>
-            <div class="hl-input-group">
-                <span>Összeg:</span>
-                <div>
-                    <input type="number" id="villanyTotal" class="hl-input" value="55000" readonly oninput="saveInputs()">
-                    <span style="font-weight:bold">Ft</span>
-                </div>
-            </div>
-            <div class="hl-hint">Anyu része (50%): <strong id="villanyHalf" style="color:var(--primary)">27 500 Ft</strong></div>
-        </div>
-
-        <div id="expenseList"></div>
-    </div>
-
-    <div class="card">
-        <div class="total-box">
-            <div class="total-label">UTALANDÓ ÖSSZEG (ANYU)</div>
-            <div class="total-amount" id="grandTotal">0 Ft</div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">
-            <div class="title-left"><i>📝</i> MVM ELŐZMÉNYEK</div>
+        <div class="card-header">
+            <div class="card-title">Fixed Költségek</div>
+            <button class="edit-toggle" id="editBtn" onclick="toggleEdit()">Szerkesztés</button>
         </div>
         
-        <div class="mvm-mini">
-            <div class="mvm-field">
-                <label>Előző (Fix)</label>
-                <input type="number" id="mvmPrev" readonly>
+        <div class="highlight-box" style="margin-bottom: 15px;">
+            <div style="font-size: 0.7rem; font-weight: 800; color: var(--primary); margin-bottom: 5px; text-transform: uppercase;">Villany Átalány (50%)</div>
+            <div class="main-val" id="villanyDisplay">0 <span>Ft</span></div>
+            <input type="number" id="villanyTotal" value="55000" style="display:none" oninput="updateAll()">
+        </div>
+
+        <div id="expenseList">
             </div>
-            <div class="mvm-field">
-                <label>Jelenlegi</label>
-                <input type="number" id="mvmCurr" placeholder="..." oninput="updateTable()">
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">MVM Energia Kontroll</div>
+        </div>
+
+        <div class="mvm-inputs-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+            <div>
+                <label style="font-size: 0.65rem; color: var(--dim); display:block; margin-bottom:5px;">Előző óraállás</label>
+                <input type="number" id="mvmPrev" readonly style="width:100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 10px; font-weight: 800;">
             </div>
-            <div class="mvm-stat-container">
-                <div class="mvm-stat-row">
-                    <span>Fogyasztás:</span>
-                    <span id="mvmCons" style="font-weight:bold">0 kWh</span>
-                </div>
-                <div class="mvm-stat-row">
-                    <span>Becsült Ár:</span>
-                    <span id="mvmCostDisp" class="stat-main">0 Ft</span>
-                </div>
-                <div id="mvmSplitDetail" class="stat-sub">...</div>
+            <div>
+                <label style="font-size: 0.65rem; color: var(--dim); display:block; margin-bottom:5px;">Friss óraállás</label>
+                <input type="number" id="mvmCurr" placeholder="Beírás..." oninput="updateAll()" style="width:100%; background: rgba(59,130,246,0.1); border: 1px solid var(--primary); color: white; padding: 10px; border-radius: 10px; font-weight: 800;">
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-labels">
+                <span id="labelRezsi">Rezsi: 0 kWh</span>
+                <span id="labelPiaci">Piaci: 0 kWh</span>
+            </div>
+            <div class="bar-bg">
+                <div id="barRezsi" class="bar-rezsi" style="width: 0%"></div>
+                <div id="barPiaci" class="bar-piaci" style="width: 0%"></div>
+            </div>
+            <div style="text-align: center; margin-top: 10px;">
+                <div style="font-size: 0.7rem; color: var(--dim);">Becsült aktuális havi költség:</div>
+                <div id="liveMvmCost" style="font-size: 1.2rem; font-weight: 900; color: var(--success);">0 Ft</div>
             </div>
         </div>
 
         <table>
             <thead>
                 <tr>
-                    <th>Dátum</th>
-                    <th>Óra</th>
-                    <th style="text-align:right">Fogy. (kWh)</th>
-                    <th style="text-align:right">Részletek & Ár</th>
+                    <th>Időszak</th>
+                    <th>Fogyasztás</th>
+                    <th style="text-align:right">Költség</th>
                 </tr>
             </thead>
-            <tbody id="mvmHistoryBody"></tbody>
+            <tbody id="mvmHistory"></tbody>
         </table>
     </div>
 </div>
 
-<div class="fab-group">
-    <button class="btn" onclick="save()">💾 Mentés</button>
-    <button class="btn btn-primary" onclick="sharePDF()">📤 PDF Megosztás</button>
+<div class="actions">
+    <button class="btn btn-save" onclick="saveData()">💾 MENTÉS</button>
+    <button class="btn btn-pdf" onclick="exportPDF()">📤 PDF KÜLDÉS</button>
 </div>
 
 <script>
-// --- KONFIG ---
-const DEFAULT_ITEMS = [
-    { id: 'tv', name: 'TV Előfizetés', val: 7142 },
-    { id: 'tel', name: 'Telefon', val: 4500 },
-    { id: 'net', name: 'Internet', val: 2880 },
-    { id: 'viz', name: 'Vízdíj', val: 2500 },
-    { id: 'bizt', name: 'Biztosítás', val: 2386 },
-    { id: 'szemet', name: 'Szemét díj', val: 667 },
-    { id: 'komm', name: 'Kommunális adó', val: 600 },
-];
-const MVM_LIMIT = 210; const P_REZSI = 36.386; const P_PIACI = 70.104;
-
-const now = new Date();
-const monthNames = ["JANUÁR","FEBRUÁR","MÁRCIUS","ÁPRILIS","MÁJUS","JÚNIUS","JÚLIUS","AUGUSZTUS","SZEPTEMBER","OKTÓBER","NOVEMBER","DECEMBER"];
-const currentMonthStr = `${now.getFullYear()}. ${monthNames[now.getMonth()]}`;
-document.getElementById('currentMonthDate').innerText = currentMonthStr;
-
-// INPUTOK
-let savedInputs = JSON.parse(localStorage.getItem('expense_settings')) || {};
-let villanyVal = savedInputs['villanyTotal'] || 55000;
-document.getElementById('villanyTotal').value = villanyVal;
-
-const listContainer = document.getElementById('expenseList');
-DEFAULT_ITEMS.forEach(item => {
-    let currentVal = savedInputs[item.id] !== undefined ? savedInputs[item.id] : item.val;
-    const div = document.createElement('div');
-    div.className = 'expense-item';
-    div.innerHTML = `<span class="ex-name">${item.name}</span><div><input type="number" class="ex-input locked" id="inp_${item.id}" value="${currentVal}" readonly oninput="saveInputs()"><span style="font-size:0.8rem; color:#94a3b8">Ft</span></div>`;
-    listContainer.appendChild(div);
-});
-
-// ZÁR
-let isEditing = false;
-function toggleEdit() {
-    isEditing = !isEditing;
-    const btn = document.getElementById('editBtn');
-    const inputs = document.querySelectorAll('.ex-input, #villanyTotal');
-    if(isEditing) {
-        btn.innerHTML = '🔓 SZERKESZTÉS'; btn.classList.add('active');
-        inputs.forEach(inp => inp.removeAttribute('readonly'));
-    } else {
-        btn.innerHTML = '🔒 ZÁRVA'; btn.classList.remove('active');
-        inputs.forEach(inp => inp.setAttribute('readonly', true));
-    }
-}
-
-// ELŐZMÉNYEK
-const defaultHistory = [
-    { date: '2025-09-01', read: 17232, cons: 351, cost: 17528, momTotal: 34000 },
-    { date: '2025-10-01', read: 17583, cons: 231, cost: 9123, momTotal: 34000 },
-    { date: '2025-11-01', read: 17814, cons: 557, cost: 32002, momTotal: 34000 },
-    { date: '2025-12-01', read: 18372, cons: 861, cost: 53284, momTotal: 34000 }
-];
-let historyLog = JSON.parse(localStorage.getItem('secure_history_v1')) || defaultHistory;
-
-// MATEK
-function formatMoney(num) { return Math.round(num).toLocaleString('hu-HU') + " Ft"; }
-function calc() {
-    const vTot = parseFloat(document.getElementById('villanyTotal').value) || 0;
-    const vShare = vTot / 2;
-    document.getElementById('villanyHalf').innerText = formatMoney(vShare);
-    let others = 0;
-    DEFAULT_ITEMS.forEach(item => { others += parseFloat(document.getElementById(`inp_${item.id}`).value) || 0; });
-    const grand = vShare + others;
-    document.getElementById('grandTotal').innerText = formatMoney(grand);
-    return grand;
-}
-
-// --- ÚJ SZÁMOLÓ ÉS TÁBLÁZAT FRISSÍTŐ ---
-function updateTable() {
-    const tbody = document.getElementById('mvmHistoryBody');
-    tbody.innerHTML = '';
-
-    const curr = parseFloat(document.getElementById('mvmCurr').value);
-    const prev = parseFloat(document.getElementById('mvmPrev').value);
-    
-    // Számolás
-    let liveCost = 0;
-    let liveCons = 0;
-    let rezsiResz = 0; // Ft
-    let piaciResz = 0; // Ft
-    let hasLiveInput = false;
-    let detailText = ""; // Fenti doboz szöveg
-    let consDetail = ""; // Fogyasztás részletezése
-
-    if(curr && curr > prev) {
-        liveCons = curr - prev;
-        
-        // Rezsi logika
-        if(liveCons <= MVM_LIMIT) {
-            rezsiResz = liveCons * P_REZSI;
-            liveCost = rezsiResz;
-            detailText = `(Rezsi: ${formatMoney(rezsiResz)})`;
-            consDetail = `${liveCons}`;
-        } else {
-            rezsiResz = MVM_LIMIT * P_REZSI;
-            const over = liveCons - MVM_LIMIT;
-            piaciResz = over * P_PIACI;
-            liveCost = rezsiResz + piaciResz;
-            detailText = `(Rezsi: ${formatMoney(rezsiResz)} + Piaci: ${formatMoney(piaciResz)})`;
-            consDetail = `${liveCons} <span style="font-size:0.7rem">(${MVM_LIMIT}+${over})</span>`;
-        }
-        hasLiveInput = true;
-    }
-    
-    // UI frissítés (Felső doboz)
-    document.getElementById('mvmCons').innerText = liveCons + " kWh";
-    document.getElementById('mvmCostDisp').innerText = formatMoney(liveCost);
-    document.getElementById('mvmSplitDetail').innerHTML = detailText; // Itt jelenik meg a bontás fent
-
-    // 1. ÉLŐ SOR GENERÁLÁS (Bontással)
-    if(hasLiveInput || curr > 0) {
-        let tableBreakdown = "";
-        if(liveCons <= MVM_LIMIT) {
-             tableBreakdown = `<span class="breakdown-text breakdown-split">Rezsi: ${formatMoney(rezsiResz)}</span>`;
-        } else {
-             tableBreakdown = `
-                <span class="breakdown-text breakdown-split">Rezsi: ${formatMoney(rezsiResz)}</span>
-                <span class="breakdown-text breakdown-over">Piaci: ${formatMoney(piaciResz)}</span>`;
-        }
-
-        tbody.innerHTML += `
-        <tr class="live-row">
-            <td>
-                <strong>${currentMonthStr}</strong><br>
-                <span style="font-size:0.7rem; opacity:0.8; text-transform:uppercase;">(Jelenlegi)</span>
-            </td>
-            <td><strong>${curr || '...'}</strong></td>
-            <td class="cons-col"><strong>${consDetail}</strong></td>
-            <td class="cost-col">
-                <strong>${formatMoney(liveCost)}</strong>
-                ${tableBreakdown}
-            </td>
-        </tr>`;
-    }
-
-    // 2. MENTETT ELŐZMÉNYEK GENERÁLÁS (Utólag számoljuk ki a bontást a megjelenítéshez)
-    [...historyLog].reverse().forEach(row => {
-        // Gyors újraszámolás a megjelenítéshez (hogy ne kelljen az adatbázist módosítani)
-        let rCost = 0, pCost = 0;
-        let cDetail = row.cons;
-        
-        if(row.cons <= MVM_LIMIT) {
-            rCost = row.cons * P_REZSI;
-        } else {
-            rCost = MVM_LIMIT * P_REZSI;
-            pCost = (row.cons - MVM_LIMIT) * P_PIACI;
-            cDetail = `${row.cons} <span style="font-size:0.7rem">(${MVM_LIMIT}+${row.cons-MVM_LIMIT})</span>`;
-        }
-
-        let breakdownHtml = "";
-        if(pCost > 0) {
-            breakdownHtml = `
-            <span class="breakdown-text breakdown-split">Rezsi: ${formatMoney(rCost)}</span>
-            <span class="breakdown-text breakdown-over">Piaci: ${formatMoney(pCost)}</span>`;
-        } else {
-            breakdownHtml = `<span class="breakdown-text breakdown-split">Rezsi: ${formatMoney(rCost)}</span>`;
-        }
-
-        tbody.innerHTML += `
-        <tr>
-            <td class="date-col">${row.date}</td>
-            <td>${row.read}</td>
-            <td class="cons-col">${cDetail}</td>
-            <td class="cost-col">
-                ${Math.round(row.cost).toLocaleString()} Ft
-                ${breakdownHtml}
-            </td>
-        </tr>`;
-    });
-
-    if(historyLog.length > 0) document.getElementById('mvmPrev').value = historyLog[historyLog.length-1].read;
-}
-
-// MENTÉS
-function saveInputs() {
-    calc();
-    let inputsToSave = { villanyTotal: parseFloat(document.getElementById('villanyTotal').value) };
-    DEFAULT_ITEMS.forEach(item => { inputsToSave[item.id] = parseFloat(document.getElementById(`inp_${item.id}`).value); });
-    localStorage.setItem('expense_settings', JSON.stringify(inputsToSave));
-}
-function save() {
-    if(!confirm("Biztosan mented? Az adatok véglegesek lesznek.")) return;
-    
-    const currMvm = parseFloat(document.getElementById('mvmCurr').value);
-    const prevMvm = parseFloat(document.getElementById('mvmPrev').value);
-    
-    let cost = 0, cons = 0;
-    if(currMvm > prevMvm) {
-        cons = currMvm - prevMvm;
-        cost = (cons <= MVM_LIMIT) ? cons * P_REZSI : (MVM_LIMIT * P_REZSI) + ((cons - MVM_LIMIT) * P_PIACI);
-    }
-    
-    const momPays = calc();
-    
-    if(currMvm && currMvm > prevMvm) {
-        historyLog.push({ date: new Date().toISOString().split('T')[0], read: currMvm, cons: cons, cost: cost, momTotal: momPays });
-        localStorage.setItem('secure_history_v1', JSON.stringify(historyLog));
-        
-        document.getElementById('mvmCurr').value = "";
-        updateTable();
-        alert("Sikeres mentés!");
-    } else { alert("Mentsd el! (De előbb írj be új óraállást!)"); }
-}
-
-// --- PDF ---
-function sharePDF() {
-    const element = document.getElementById('contentToShare');
-    const overlay = document.getElementById('loadingOverlay');
-    const editBtn = document.getElementById('editBtn');
-    
-    overlay.style.display = 'flex';
-    element.classList.add('pdf-export-mode'); 
-    editBtn.style.display = 'none'; 
-
-    const opt = {
-        margin: [5, 5, 5, 5],
-        filename: `Csaladi_Elszamolas_${now.getFullYear()}_${now.getMonth()+1}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-        pagebreak: { mode: ['avoid-all', 'css'] },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    const CONFIG = {
+        limit: 210,
+        rezsiAr: 36.386,
+        piaciAr: 70.104,
+        items: [
+            { id: 'tv', name: 'TV Előfizetés', val: 7142 },
+            { id: 'tel', name: 'Mobiltelefon', val: 4500 },
+            { id: 'net', name: 'Optikai Internet', val: 2880 },
+            { id: 'viz', name: 'Vízfogyasztás', val: 2500 },
+            { id: 'bizt', name: 'Lakásbiztosítás', val: 2386 },
+            { id: 'szemet', name: 'Szemétszállítás', val: 667 },
+            { id: 'komm', name: 'Kommunális adó', val: 600 }
+        ]
     };
 
-    html2pdf().set(opt).from(element).outputPdf('blob').then(function(pdfBlob) {
-        element.classList.remove('pdf-export-mode');
-        editBtn.style.display = 'flex';
-        overlay.style.display = 'none';
+    let isEditing = false;
+    let history = JSON.parse(localStorage.getItem('pro_history_v2')) || [
+        { date: '2025. DECEMBER', read: 18372, cons: 861, cost: 53284 },
+        { date: '2025. NOVEMBER', read: 17814, cons: 557, cost: 32002 }
+    ];
 
-        const file = new File([pdfBlob], opt.filename, { type: "application/pdf" });
+    function init() {
+        const monthNames = ["JANUÁR","FEBRUÁR","MÁRCIUS","ÁPRILIS","MÁJUS","JÚNIUS","JÚLIUS","AUGUSZTUS","SZEPTEMBER","OKTÓBER","NOVEMBER","DECEMBER"];
+        const d = new Date();
+        document.getElementById('currentDate').innerText = `${d.getFullYear()}. ${monthNames[d.getMonth()]}`;
+        
+        const list = document.getElementById('expenseList');
+        const savedVals = JSON.parse(localStorage.getItem('pro_settings')) || {};
+        
+        CONFIG.items.forEach(item => {
+            const val = savedVals[item.id] || item.val;
+            list.innerHTML += `
+                <div class="expense-row">
+                    <span class="expense-name">${item.name}</span>
+                    <div class="expense-input-wrapper">
+                        <input type="number" class="val-input" id="inp_${item.id}" value="${val}" readonly oninput="updateAll()">
+                        <span style="font-size:0.7rem; color:var(--dim); font-weight:800">FT</span>
+                    </div>
+                </div>`;
+        });
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({ title: 'Havi Elszámolás', text: 'Csatolva a kimutatás.', files: [file] }).catch(console.error);
-        } else {
-            const url = URL.createObjectURL(pdfBlob);
-            const a = document.createElement('a'); a.href = url; a.download = opt.filename; a.click();
+        if(history.length > 0) document.getElementById('mvmPrev').value = history[0].read;
+        updateAll();
+    }
+
+    function toggleEdit() {
+        isEditing = !isEditing;
+        const btn = document.getElementById('editBtn');
+        const inputs = document.querySelectorAll('.val-input, #villanyTotal');
+        btn.classList.toggle('active');
+        btn.innerText = isEditing ? 'Kész' : 'Szerkesztés';
+        inputs.forEach(i => i.readOnly = !isEditing);
+        document.getElementById('villanyTotal').style.display = isEditing ? 'block' : 'none';
+    }
+
+    function updateAll() {
+        // Villany matek
+        const vTotal = parseFloat(document.getElementById('villanyTotal').value) || 0;
+        const vShare = vTotal / 2;
+        document.getElementById('villanyDisplay').innerHTML = `${vShare.toLocaleString()} <span>Ft</span>`;
+
+        // Egyéb költségek
+        let others = 0;
+        CONFIG.items.forEach(item => {
+            others += parseFloat(document.getElementById(`inp_${item.id}`).value) || 0;
+        });
+
+        const total = vShare + others;
+        document.getElementById('grandTotal').innerText = `${Math.round(total).toLocaleString()} Ft`;
+
+        // MVM Matek
+        const curr = parseFloat(document.getElementById('mvmCurr').value) || 0;
+        const prev = parseFloat(document.getElementById('mvmPrev').value) || 0;
+        const historyTable = document.getElementById('mvmHistory');
+        
+        let liveCons = 0;
+        let liveCost = 0;
+
+        if (curr > prev) {
+            liveCons = curr - prev;
+            const rezsiPart = Math.min(liveCons, CONFIG.limit);
+            const piaciPart = Math.max(0, liveCons - CONFIG.limit);
+            liveCost = (rezsiPart * CONFIG.rezsiAr) + (piaciPart * CONFIG.piaciAr);
+
+            // Bar update
+            const rPercent = (rezsiPart / Math.max(liveCons, CONFIG.limit)) * 100;
+            const pPercent = (piaciPart / Math.max(liveCons, CONFIG.limit)) * 100;
+            document.getElementById('barRezsi').style.width = rPercent + '%';
+            document.getElementById('barPiaci').style.width = pPercent + '%';
+            document.getElementById('labelRezsi').innerText = `Rezsi: ${Math.round(rezsiPart)} kWh`;
+            document.getElementById('labelPiaci').innerText = `Piaci: ${Math.round(piaciPart)} kWh`;
+            document.getElementById('liveMvmCost').innerText = `${Math.round(liveCost).toLocaleString()} Ft`;
         }
-    });
-}
 
-updateTable();
-calc();
+        // History render
+        historyTable.innerHTML = '';
+        history.forEach(row => {
+            const isOver = row.cons > CONFIG.limit;
+            historyTable.innerHTML += `
+                <tr>
+                    <td><div style="font-weight:700">${row.date}</div><div style="font-size:0.6rem; color:var(--dim)">Óra: ${row.read}</div></td>
+                    <td>${row.cons} kWh <br> <span class="badge ${isOver ? 'badge-piaci' : 'badge-rezsi'}">${isOver ? 'Piaci' : 'Rezsi'}</span></td>
+                    <td style="text-align:right; font-weight:800; color:var(--primary)">${row.cost.toLocaleString()} Ft</td>
+                </tr>`;
+        });
+
+        // Mentés localstorage-ba (csak beállítások)
+        const settings = { villanyTotal: vTotal };
+        CONFIG.items.forEach(item => settings[item.id] = parseFloat(document.getElementById(`inp_${item.id}`).value));
+        localStorage.setItem('pro_settings', JSON.stringify(settings));
+    }
+
+    function saveData() {
+        const curr = parseFloat(document.getElementById('mvmCurr').value);
+        if(!curr) return alert("Írd be az aktuális óraállást!");
+
+        const prev = parseFloat(document.getElementById('mvmPrev').value);
+        const cons = curr - prev;
+        const rezsiPart = Math.min(cons, CONFIG.limit);
+        const piaciPart = Math.max(0, cons - CONFIG.limit);
+        const cost = (rezsiPart * CONFIG.rezsiAr) + (piaciPart * CONFIG.piaciAr);
+
+        history.unshift({
+            date: document.getElementById('currentDate').innerText,
+            read: curr,
+            cons: cons,
+            cost: Math.round(cost)
+        });
+
+        localStorage.setItem('pro_history_v2', JSON.stringify(history));
+        document.getElementById('mvmCurr').value = '';
+        document.getElementById('mvmPrev').value = curr;
+        updateAll();
+        alert("Hónap lezárva és mentve!");
+    }
+
+    function exportPDF() {
+        const element = document.getElementById('app-content');
+        const loader = document.getElementById('loader');
+        loader.style.display = 'flex';
+        
+        // PDF-specifikus stílusok aktiválása
+        document.body.classList.add('pdf-mode');
+
+        const opt = {
+            margin: 10,
+            filename: `elszamolas_${new Date().toISOString().slice(0,7)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            document.body.classList.remove('pdf-mode');
+            loader.style.display = 'none';
+        });
+    }
+
+    init();
 </script>
+
 </body>
 </html>
