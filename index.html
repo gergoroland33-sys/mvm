@@ -53,12 +53,14 @@
         .bar-fill-rezsi { background: var(--success); height: 100%; transition: 0.5s ease; }
         .bar-fill-piaci { background: var(--danger); height: 100%; transition: 0.5s ease; }
         .bar-labels { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 800; }
+        .breakdown-label { font-size: 0.7rem; color: var(--dim); display: block; margin-top: 2px; }
 
         /* TÁBLÁZAT */
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { text-align: left; color: var(--dim); padding: 10px 5px; font-size: 0.7rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-        td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
         .cost-col { font-weight: 800; text-align: right; color: var(--primary); }
+        .mini-detail { font-size: 0.65rem; color: var(--dim); line-height: 1.2; display: block; }
 
         /* GOMBOK */
         .fab-group { position: fixed; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 100; }
@@ -67,11 +69,13 @@
         .btn:active { transform: scale(0.95); }
 
         /* PDF MÓD */
-        .pdf-export-mode { background: white !important; color: #0f172a !important; padding: 20px !important; }
+        .pdf-export-mode { background: white !important; color: #0f172a !important; padding: 30px !important; }
         .pdf-export-mode .card { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; color: #0f172a !important; }
         .pdf-export-mode .total-box { border: 2px solid #f59e0b !important; background: #fffbeb !important; }
         .pdf-export-mode .total-amount, .pdf-export-mode .hl-input, .pdf-export-mode .ex-input { color: #0f172a !important; text-shadow: none !important; }
         .pdf-export-mode .fab-group, .pdf-export-mode .refresh-btn, .pdf-export-mode .edit-btn-style, .pdf-export-mode .mvm-inputs { display: none !important; }
+        .pdf-export-mode .mini-detail { color: #475569 !important; font-weight: 600; }
+        .pdf-export-mode .cost-col { color: #2563eb !important; }
     </style>
 </head>
 <body>
@@ -136,8 +140,11 @@
                 <div id="barRezsi" class="bar-fill-rezsi" style="width: 0%"></div>
                 <div id="barPiaci" class="bar-fill-piaci" style="width: 0%"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-                <span style="font-size: 0.75rem; color: var(--dim);">Becsült MVM ár:</span>
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-top: 5px;">
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--dim);">Becsült MVM ár:</span><br>
+                    <span id="liveBreakdown" class="mini-detail">Rezsi: 0 Ft | Piaci: 0 Ft</span>
+                </div>
                 <span id="liveCost" style="font-size: 1.2rem; font-weight: 900; color: var(--success);">0 Ft</span>
             </div>
         </div>
@@ -147,7 +154,7 @@
                 <tr>
                     <th>DÁTUM</th>
                     <th>FOGYASZTÁS</th>
-                    <th style="text-align:right">ÖSSZEG</th>
+                    <th style="text-align:right">ÖSSZEG & BONTÁS</th>
                 </tr>
             </thead>
             <tbody id="historyBody"></tbody>
@@ -199,7 +206,7 @@
         if(historyLog.length > 0) {
             document.getElementById('mvmPrev').value = historyLog[0].read;
         } else {
-            document.getElementById('mvmPrev').value = 18372; 
+            document.getElementById('mvmPrev').value = 17232; 
         }
         updateAll();
     }
@@ -214,54 +221,71 @@
     }
 
     function updateAll() {
-        const vTot = parseFloat(document.getElementById('villanyTotal').value) || 0;
-        const vShare = vTot / 2;
+        const vTot = Math.round(parseFloat(document.getElementById('villanyTotal').value) || 0);
+        const vShare = Math.round(vTot / 2);
         document.getElementById('villanyHalf').innerText = vShare.toLocaleString('hu-HU') + " Ft";
 
         let others = 0;
         ITEMS_CONFIG.forEach(item => {
-            others += parseFloat(document.getElementById(`inp_${item.id}`).value) || 0;
+            others += Math.round(parseFloat(document.getElementById(`inp_${item.id}`).value) || 0);
         });
 
         const grandTotal = Math.round(vShare + others);
         document.getElementById('grandTotal').innerText = grandTotal.toLocaleString('hu-HU') + " Ft";
 
-        // MVM Matek & Progress Bar
+        // MVM Matek & Progress Bar (Kerekítve!)
         const curr = parseFloat(document.getElementById('mvmCurr').value) || 0;
         const prev = parseFloat(document.getElementById('mvmPrev').value) || 0;
         
         if(curr > prev) {
-            const cons = curr - prev;
+            const cons = Math.round((curr - prev) * 100) / 100; // 2 tizedesre kerekített fogyasztás
             const rPart = Math.min(cons, MVM_LIMIT);
             const pPart = Math.max(0, cons - MVM_LIMIT);
-            const cost = (rPart * P_REZSI) + (pPart * P_PIACI);
+            
+            const rCost = Math.round(rPart * P_REZSI);
+            const pCost = Math.round(pPart * P_PIACI);
+            const totalCost = rCost + pCost;
 
             const totalWidth = Math.max(cons, MVM_LIMIT);
             document.getElementById('barRezsi').style.width = (rPart / totalWidth * 100) + "%";
             document.getElementById('barPiaci').style.width = (pPart / totalWidth * 100) + "%";
-            document.getElementById('txtRezsi').innerText = `Rezsi: ${Math.round(rPart)} kWh`;
-            document.getElementById('txtPiaci').innerText = `Piaci: ${Math.round(pPart)} kWh`;
-            document.getElementById('liveCost').innerText = Math.round(cost).toLocaleString('hu-HU') + " Ft";
+            document.getElementById('txtRezsi').innerText = `Rezsi: ${rPart.toFixed(1)} kWh`;
+            document.getElementById('txtPiaci').innerText = `Piaci: ${pPart.toFixed(1)} kWh`;
+            document.getElementById('liveCost').innerText = totalCost.toLocaleString('hu-HU') + " Ft";
+            document.getElementById('liveBreakdown').innerText = `Rezsi: ${rCost.toLocaleString()} Ft | Piaci: ${pCost.toLocaleString()} Ft`;
             document.getElementById('liveCost').style.color = pPart > 0 ? 'var(--danger)' : 'var(--success)';
         } else {
             document.getElementById('barRezsi').style.width = "0%";
             document.getElementById('barPiaci').style.width = "0%";
             document.getElementById('liveCost').innerText = "0 Ft";
+            document.getElementById('liveBreakdown').innerText = "Rezsi: 0 Ft | Piaci: 0 Ft";
         }
 
-        // Táblázat render (utolsó 5)
+        // Táblázat render
         const tbody = document.getElementById('historyBody');
         tbody.innerHTML = '';
         [...historyLog].forEach(row => {
+            const rPart = Math.min(row.cons, MVM_LIMIT);
+            const pPart = Math.max(0, row.cons - MVM_LIMIT);
+            const rCost = Math.round(rPart * P_REZSI);
+            const pCost = Math.round(pPart * P_PIACI);
+
             tbody.innerHTML += `
                 <tr>
                     <td style="font-weight: 600;">${row.date}</td>
-                    <td>${row.cons} kWh ${row.cons > MVM_LIMIT ? '<span style="color:var(--danger)">!</span>' : ''}</td>
-                    <td class="cost-col">${Math.round(row.cost).toLocaleString('hu-HU')} Ft</td>
+                    <td>
+                        <strong>${Math.round(row.cons).toLocaleString()} kWh</strong>
+                        ${row.cons > MVM_LIMIT ? '<span style="color:var(--danger); font-weight:bold;"> !</span>' : ''}
+                        <span class="mini-detail">R: ${rPart.toFixed(1)} | P: ${pPart.toFixed(1)}</span>
+                    </td>
+                    <td class="cost-col">
+                        ${Math.round(row.cost).toLocaleString('hu-HU')} Ft
+                        <span class="mini-detail">R: ${rCost.toLocaleString()} | P: ${pCost.toLocaleString()} Ft</span>
+                    </td>
                 </tr>`;
         });
 
-        // Mentés (Beállítások)
+        // Mentés
         let toSave = { villanyTotal: vTot };
         ITEMS_CONFIG.forEach(item => toSave[item.id] = parseFloat(document.getElementById(`inp_${item.id}`).value));
         localStorage.setItem('expense_settings', JSON.stringify(toSave));
@@ -272,20 +296,20 @@
         const prev = parseFloat(document.getElementById('mvmPrev').value);
         if(!curr || curr <= prev) return alert("Kérlek írj be egy érvényes új óraállást!");
 
-        if(!confirm("Biztosan lezárod a hónapot? Az adatok bekerülnek az előzményekbe.")) return;
-
-        const cons = curr - prev;
-        const cost = (Math.min(cons, MVM_LIMIT) * P_REZSI) + (Math.max(0, cons - MVM_LIMIT) * P_PIACI);
+        const cons = Math.round((curr - prev) * 100) / 100;
+        const rPart = Math.min(cons, MVM_LIMIT);
+        const pPart = Math.max(0, cons - MVM_LIMIT);
+        const cost = Math.round(rPart * P_REZSI) + Math.round(pPart * P_PIACI);
         
         historyLog.unshift({
             date: document.getElementById('currentMonthDate').innerText,
-            read: curr,
+            read: Math.round(curr),
             cons: cons,
             cost: cost
         });
 
         localStorage.setItem('secure_history_v1', JSON.stringify(historyLog));
-        document.getElementById('mvmPrev').value = curr;
+        document.getElementById('mvmPrev').value = Math.round(curr);
         document.getElementById('mvmCurr').value = '';
         updateAll();
         alert("Sikeres mentés!");
@@ -296,7 +320,7 @@
         el.classList.add('pdf-export-mode');
         
         const opt = {
-            margin: 10,
+            margin: [10, 5, 10, 5],
             filename: `Elszamolas_${document.getElementById('currentMonthDate').innerText.replace('. ','_')}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
