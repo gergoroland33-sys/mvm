@@ -3,165 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Családi Elszámolás Pro - Keretfigyelővel</title>
+    <title>Családi Elszámolás Pro SPA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --accent: #f59e0b;
             --text: #f8fafc; --dim: #94a3b8; --border: #334155; --success: #10b981; --danger: #ef4444;
+            --nav-bg: #161e2d;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 120px; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow-x: hidden; }
 
-        .header-container { position: relative; text-align: center; margin-bottom: 25px; padding-top: 10px; }
-        h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .subtitle { font-size: 0.8rem; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        /* OLDALKEZELÉS */
+        .page { display: none; padding: 20px; padding-bottom: 100px; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .refresh-btn { position: absolute; top: 0; right: 0; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--dim); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
-        
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .card-title { font-size: 0.85rem; font-weight: 700; color: var(--dim); text-transform: uppercase; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        /* HEADER */
+        .header { text-align: center; margin-bottom: 25px; }
+        h1 { margin: 0; font-size: 1.4rem; font-weight: 900; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { font-size: 0.75rem; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; }
 
-        /* ÉVES KERET MONITOR */
-        .quota-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--primary); }
-        .quota-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .quota-val { font-size: 1.1rem; font-weight: 800; color: white; }
-        .quota-label { font-size: 0.65rem; color: var(--dim); text-transform: uppercase; }
+        /* KÁRTYÁK */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .card-title { font-size: 0.8rem; font-weight: 800; color: var(--dim); text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
 
-        /* MVM MONITOR */
-        .highlight-row { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .hl-input { background: transparent; border: none; color: white; font-size: 1.5rem; font-weight: 900; width: 120px; text-align: right; outline: none; }
-        
-        .total-box { background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid var(--accent); border-radius: 20px; padding: 25px; text-align: center; }
-        .total-amount { font-size: 2.8rem; font-weight: 900; color: white; text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+        /* DASHBOARD ELEMEK */
+        .total-hero { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none; text-align: center; color: white; padding: 30px; }
+        .hero-label { font-size: 0.8rem; font-weight: 700; opacity: 0.8; }
+        .hero-amount { font-size: 3rem; font-weight: 900; margin: 10px 0; }
 
-        .mvm-monitor { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .bar-container { height: 12px; background: #334155; border-radius: 6px; margin: 12px 0; overflow: hidden; display: flex; }
-        .bar-fill-rezsi { background: var(--success); height: 100%; }
-        .bar-fill-piaci { background: var(--danger); height: 100%; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-item { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-val { font-size: 1.1rem; font-weight: 800; display: block; }
+        .stat-lab { font-size: 0.6rem; color: var(--dim); text-transform: uppercase; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { text-align: left; color: var(--dim); padding: 10px 5px; font-size: 0.7rem; border-bottom: 1px solid var(--border); }
-        td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
+        /* MVM PROGRESS */
+        .mvm-bar-box { margin: 15px 0; }
+        .bar-wrap { height: 10px; background: #334155; border-radius: 5px; overflow: hidden; display: flex; margin: 8px 0; }
+        .bar-rezsi { background: var(--success); height: 100%; }
+        .bar-piaci { background: var(--danger); height: 100%; }
 
-        .rezsi-text { color: var(--success); font-weight: bold; }
-        .piaci-text { color: var(--danger); font-weight: bold; }
-        .detail-line { font-size: 0.65rem; display: block; margin-top: 2px; }
+        /* TÁBLÁZAT */
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 15px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .cost-td { text-align: right; font-weight: 800; color: var(--primary); }
 
-        .fab-group { position: fixed; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; z-index: 100; }
-        .btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 14px 24px; border-radius: 50px; font-weight: 700; cursor: pointer; }
-        .btn-primary { background: var(--primary); border: none; }
+        /* NAVIGÁCIÓ */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); height: 80px; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: 20px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--dim); text-decoration: none; font-size: 0.7rem; font-weight: 700; gap: 5px; transition: 0.3s; flex: 1; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 1.4rem; }
 
-        /* PDF FIXES */
-        .pdf-mode { background: white !important; color: #0f172a !important; padding: 0 !important; }
-        .pdf-mode #contentToExport { padding: 20px !important; }
-        .pdf-mode .card { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #0f172a !important; box-shadow: none !important; page-break-inside: avoid; }
-        .pdf-mode .refresh-btn, .pdf-mode .fab-group, .pdf-mode .mvm-inputs, .pdf-mode .edit-btn { display: none !important; }
-        .pdf-mode .total-box { background: #fffbeb !important; border-color: var(--accent) !important; }
-        .pdf-mode .total-amount { color: #b45309 !important; text-shadow: none !important; }
+        /* INPUTOK */
+        .input-group { margin-bottom: 15px; }
+        .input-label { display: block; font-size: 0.7rem; color: var(--dim); margin-bottom: 5px; font-weight: 700; }
+        .styled-input { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: white; font-weight: 800; outline: none; transition: 0.3s; }
+        .styled-input:focus { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); }
+
+        /* PDF DESIGN */
+        .pdf-export-mode { background: #f1f5f9 !important; padding: 0 !important; }
+        .pdf-content { padding: 40px !important; }
+        .pdf-export-mode .card { background: white !important; color: #1e293b !important; border: 1px solid #e2e8f0 !important; }
+        .pdf-export-mode .stat-item { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
+        .pdf-export-mode .stat-val { color: #0f172a !important; }
+        .pdf-export-mode .total-hero { background: #1e293b !important; }
+        .pdf-export-mode td { color: #334155 !important; }
     </style>
 </head>
 <body>
 
-<div id="contentToExport">
-    <div class="header-container">
-        <h1>CSALÁDI ELSZÁMOLÁS</h1>
-        <div class="subtitle" id="currentMonthDate">2026. FEBRUÁR</div>
-        <button class="refresh-btn" onclick="location.reload()">↻</button>
+<div id="page-dashboard" class="page active">
+    <div class="header">
+        <h1>ADATOK MEGTEKINTÉSE</h1>
+        <div class="subtitle" id="currentDateDisp">2026. FEBRUÁR</div>
     </div>
 
-    <div class="card quota-card">
+    <div class="card total-hero" id="pdf-hero">
+        <div class="hero-label">FIZETENDŐ (ANYU)</div>
+        <div class="hero-amount" id="grandTotal">0 Ft</div>
+        <div style="font-size: 0.7rem; opacity: 0.8;">Minden havi rezsivel együtt</div>
+    </div>
+
+    <div class="card">
         <div class="card-title">📊 ÉVES KERET ÁLLAPOT (AUG 31-IG)</div>
-        <div class="quota-stats">
-            <div>
-                <div class="quota-label">Éves limit</div>
-                <div class="quota-val">8 700 kWh</div>
+        <div class="stat-grid">
+            <div class="stat-item">
+                <span class="stat-lab">Hátralévő</span>
+                <span class="stat-val" id="remQuota" style="color: var(--success);">0 kWh</span>
             </div>
-            <div>
-                <div class="quota-label">Eddigi fogyasztás</div>
-                <div class="quota-val" id="totalConsumed">0 kWh</div>
+            <div class="stat-item">
+                <span class="stat-lab">Havi átlag</span>
+                <span class="stat-val" id="avgQuota">0 kWh</span>
             </div>
-            <div>
-                <div class="quota-label">Hátralévő keret</div>
-                <div class="quota-val" id="remainingQuota" style="color: var(--success);">0 kWh</div>
+            <div class="stat-item">
+                <span class="stat-lab">Eddigi össz.</span>
+                <span class="stat-val" id="totalCons">0 kWh</span>
             </div>
-            <div>
-                <div class="quota-label">Havi átlagkeret</div>
-                <div class="quota-val" id="avgRemaining">0 kWh/hó</div>
+            <div class="stat-item">
+                <span class="stat-lab">Éves limit</span>
+                <span class="stat-val">8700 kWh</span>
             </div>
-        </div>
-        <div id="quotaWarning" style="font-size: 0.7rem; margin-top: 10px; font-weight: bold;"></div>
-    </div>
-
-    <div class="card">
-        <div class="total-box">
-            <div style="color: var(--accent); font-weight: 800; font-size: 0.8rem; letter-spacing: 1px;">UTALANDÓ ÖSSZEG (ANYU)</div>
-            <div class="total-amount" id="grandTotal">0 Ft</div>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-title">
-            <span>⚡ MVM MONITORING</span>
-            <button class="btn edit-btn" style="padding: 4px 10px; font-size: 0.6rem;" id="editBtn" onclick="toggleEdit()">🔒 ZÁRVA</button>
-        </div>
-        
-        <div class="mvm-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-            <div>
-                <label style="font-size: 0.65rem; color: var(--dim);">ELŐZŐ</label>
-                <input type="number" id="mvmPrev" readonly style="width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border); color:white; padding:8px; border-radius:8px; font-weight:bold;">
+        <div class="card-title">⚡ MVM AKTUÁLIS BONTÁS</div>
+        <div class="mvm-bar-box">
+            <div class="bar-wrap">
+                <div id="barRezsi" class="bar-rezsi"></div>
+                <div id="barPiaci" class="bar-piaci"></div>
             </div>
-            <div>
-                <label style="font-size: 0.65rem; color: var(--dim);">ÚJ ÁLLÁS</label>
-                <input type="number" id="mvmCurr" placeholder="..." oninput="updateAll()" style="width:100%; background:rgba(59,130,246,0.1); border:1px solid var(--primary); color:white; padding:8px; border-radius:8px; font-weight:bold; outline: none;">
-            </div>
-        </div>
-
-        <div class="mvm-monitor">
-            <div class="bar-labels">
-                <span id="txtRezsi" class="rezsi-text">Kedvezményes: 0 kWh</span>
-                <span id="txtPiaci" class="piaci-text">Piaci: 0 kWh</span>
-            </div>
-            <div class="bar-container">
-                <div id="barRezsi" class="bar-fill-rezsi" style="width: 0%"></div>
-                <div id="barPiaci" class="bar-fill-piaci" style="width: 0%"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <span id="liveBreakdownRezsi" class="detail-line rezsi-text">Alapár: 0 Ft</span>
-                    <span id="liveBreakdownPiaci" class="detail-line piaci-text">Piaci ár: 0 Ft</span>
+            <div class="stat-grid" style="margin-top:10px;">
+                <div style="font-size:0.7rem;">
+                    <span class="rezsi-text" style="color:var(--success)">●</span> Kedvezményes árú rész:<br>
+                    <strong id="valRezsi">0 Ft</strong>
                 </div>
-                <span id="liveCost" style="font-size: 1.3rem; font-weight: 900; color: var(--success);">0 Ft</span>
+                <div style="font-size:0.7rem; text-align:right;">
+                    <span style="color:var(--danger)">●</span> Piaci áras rész:<br>
+                    <strong id="valPiaci">0 Ft</strong>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="card-title">KÖLTSÉGEK RÉSZLETEZÉSE</div>
-        <div class="highlight-row">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.8rem; font-weight:bold; color:var(--primary);">VILLANY ÁTALÁNY (50%)</span>
-                <input type="number" id="villanyTotal" class="hl-input" value="55000" readonly oninput="updateAll()">
-            </div>
-        </div>
-        <div id="expenseList"></div>
-
-        <div class="card-title" style="margin-top:20px;">ELŐZMÉNYEK (CSÖKKENŐ)</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>DÁTUM</th>
-                    <th>FOGYASZTÁS</th>
-                    <th style="text-align:right">ÖSSZEG</th>
-                </tr>
-            </thead>
-            <tbody id="historyBody"></tbody>
-        </table>
+    <div class="card">
+        <div class="card-title">📜 ELŐZMÉNYEK</div>
+        <table><tbody id="historyBody"></tbody></table>
     </div>
 </div>
 
-<div class="fab-group">
-    <button class="btn" onclick="saveData()">💾 MENTÉS</button>
-    <button class="btn btn-primary" onclick="sharePDF()">📤 PDF KÜLDÉS</button>
+<div id="page-inputs" class="page">
+    <div class="header">
+        <h1>ADATOK MEGADÁSA</h1>
+        <div class="subtitle">SZERKESZTÉS ÉS MENTÉS</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">⚙️ MVM ÓRAÁLLÁS</div>
+        <div class="input-group">
+            <label class="input-label">UTOLSÓ MENTETT ÁLLÁS</label>
+            <input type="number" id="mvmPrev" class="styled-input" readonly>
+        </div>
+        <div class="input-group">
+            <label class="input-label">FRISS LEOLVASOTT ÉRTÉK</label>
+            <input type="number" id="mvmCurr" class="styled-input" placeholder="Írd be az új állást..." oninput="updateCalculations()">
+        </div>
+        <button onclick="saveNewMonth()" style="width:100%; padding:15px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:900; margin-top:10px;">💾 HÓNAP LEZÁRÁSA ÉS MENTÉS</button>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🏠 FIX HAVI KÖLTSÉGEK (50%)</div>
+        <div class="input-group">
+            <label class="input-label">VILLANY ÁTALÁNY (TELJES ÖSSZEG)</label>
+            <input type="number" id="villanyTotal" class="styled-input" value="55000" oninput="updateCalculations()">
+        </div>
+        <div id="fixExpensesList"></div>
+    </div>
+    
+    <div style="text-align:center; padding: 20px;">
+        <button onclick="exportPDFPro()" style="background: white; color: black; border:none; padding: 15px 30px; border-radius: 50px; font-weight: 800; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">📤 PRO PDF GENERÁLÁSA</button>
+    </div>
 </div>
+
+<nav class="nav-bar">
+    <a href="javascript:void(0)" class="nav-item active" id="nav-dash" onclick="showPage('dashboard')">
+        <span class="nav-icon">📊</span>
+        <span>KIMUTATÁS</span>
+    </a>
+    <a href="javascript:void(0)" class="nav-item" id="nav-input" onclick="showPage('inputs')">
+        <span class="nav-icon">✏️</span>
+        <span>ADATBEVITEL</span>
+    </a>
+    <a href="javascript:void(0)" class="nav-item" onclick="location.reload()">
+        <span class="nav-icon">↻</span>
+        <span>FRISSÍTÉS</span>
+    </a>
+</nav>
 
 <script>
     const CONFIG = [
@@ -173,142 +191,147 @@
         { id: 'szemet', name: 'Szemét díj', val: 667 },
         { id: 'komm', name: 'Adó', val: 600 }
     ];
-    const MONTHLY_LIMIT = 210; 
-    const YEARLY_TOTAL_LIMIT = 8700; 
-    const P_REZSI = 36.386; 
-    const P_PIACI = 70.104;
+    const M_LIMIT = 210; const Y_LIMIT = 8700; const P_REZSI = 36.386; const P_PIACI = 70.104;
 
-    let isEditing = false;
-    let savedInputs = JSON.parse(localStorage.getItem('expense_settings')) || {};
-    let historyLog = JSON.parse(localStorage.getItem('secure_history_v1')) || [];
+    let history = JSON.parse(localStorage.getItem('secure_history_v1')) || [];
+    let settings = JSON.parse(localStorage.getItem('expense_settings')) || {};
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('page-' + id).classList.add('active');
+        document.getElementById('nav-' + (id === 'dashboard' ? 'dash' : 'input')).classList.add('active');
+    }
 
     function init() {
-        const monthNames = ["JANUÁR","FEBRUÁR","MÁRCIUS","ÁPRILIS","MÁJUS","JÚNIUS","JÚLIUS","AUGUSZTUS","SZEPTEMBER","OKTÓBER","NOVEMBER","DECEMBER"];
-        const now = new Date();
-        document.getElementById('currentMonthDate').innerText = `${now.getFullYear()}. ${monthNames[now.getMonth()]}`;
-        document.getElementById('villanyTotal').value = savedInputs['villanyTotal'] || 55000;
+        const d = new Date();
+        const months = ["JANUÁR","FEBRUÁR","MÁRCIUS","ÁPRILIS","MÁJUS","JÚNIUS","JÚLIUS","AUGUSZTUS","SZEPTEMBER","OKTÓBER","NOVEMBER","DECEMBER"];
+        document.getElementById('currentDateDisp').innerText = `${d.getFullYear()}. ${months[d.getMonth()]}`;
         
-        const list = document.getElementById('expenseList');
+        document.getElementById('villanyTotal').value = settings.villanyTotal || 55000;
+        const list = document.getElementById('fixExpensesList');
         CONFIG.forEach(item => {
-            const val = savedInputs[item.id] !== undefined ? savedInputs[item.id] : item.val;
-            list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #334155;">
-                <span style="font-size:0.8rem;">${item.name}</span>
-                <input type="number" class="ex-input" id="inp_${item.id}" value="${val}" readonly oninput="updateAll()" style="background:transparent; border:none; color:white; text-align:right; font-weight:bold; width:80px;">
-            </div>`;
+            const val = settings[item.id] !== undefined ? settings[item.id] : item.val;
+            list.innerHTML += `
+                <div class="input-group">
+                    <label class="input-label">${item.name.toUpperCase()}</label>
+                    <input type="number" id="inp_${item.id}" class="styled-input" value="${val}" oninput="updateCalculations()">
+                </div>`;
         });
 
-        if(historyLog.length > 0) document.getElementById('mvmPrev').value = historyLog[0].read;
-        updateAll();
+        if(history.length > 0) document.getElementById('mvmPrev').value = history[0].read;
+        else document.getElementById('mvmPrev').value = 17232;
+
+        updateCalculations();
     }
 
-    function toggleEdit() {
-        isEditing = !isEditing;
-        const btn = document.getElementById('editBtn');
-        const inputs = document.querySelectorAll('.ex-input, #villanyTotal');
-        btn.innerText = isEditing ? '🔓 NYITVA' : '🔒 ZÁRVA';
-        inputs.forEach(i => i.readOnly = !isEditing);
-    }
-
-    function updateAll() {
-        // Havi összesítő
+    function updateCalculations() {
+        // Fixek
         const vShare = Math.round((parseFloat(document.getElementById('villanyTotal').value) || 0) / 2);
         let others = 0;
         CONFIG.forEach(item => others += Math.round(parseFloat(document.getElementById(`inp_${item.id}`).value) || 0));
         document.getElementById('grandTotal').innerText = (vShare + others).toLocaleString() + " Ft";
 
-        // MVM Kalkuláció
+        // MVM
         const curr = parseFloat(document.getElementById('mvmCurr').value) || 0;
         const prev = parseFloat(document.getElementById('mvmPrev').value) || 0;
+        let rC = 0, pC = 0;
         if(curr > prev) {
             const cons = Math.round(curr - prev);
-            const rP = Math.min(cons, MONTHLY_LIMIT);
-            const pP = Math.max(0, cons - MONTHLY_LIMIT);
-            const rC = Math.round(rP * P_REZSI);
-            const pC = Math.round(pP * P_PIACI);
-
-            document.getElementById('barRezsi').style.width = (rP / Math.max(cons, MONTHLY_LIMIT) * 100) + "%";
-            document.getElementById('barPiaci').style.width = (pP / Math.max(cons, MONTHLY_LIMIT) * 100) + "%";
-            document.getElementById('txtRezsi').innerText = `Kedvezményes: ${rP} kWh`;
-            document.getElementById('txtPiaci').innerText = `Piaci: ${pP} kWh`;
-            document.getElementById('liveCost').innerText = (rC + pC).toLocaleString() + " Ft";
-            document.getElementById('liveBreakdownRezsi').innerText = `Alapár: ${rC.toLocaleString()} Ft`;
-            document.getElementById('liveBreakdownPiaci').innerText = `Piaci ár: ${pC.toLocaleString()} Ft`;
+            const rP = Math.min(cons, M_LIMIT);
+            const pP = Math.max(0, cons - M_LIMIT);
+            rC = Math.round(rP * P_REZSI);
+            pC = Math.round(pP * P_PIACI);
+            document.getElementById('barRezsi').style.width = (rP / Math.max(cons, M_LIMIT) * 100) + "%";
+            document.getElementById('barPiaci').style.width = (pP / Math.max(cons, M_LIMIT) * 100) + "%";
         }
+        document.getElementById('valRezsi').innerText = rC.toLocaleString() + " Ft";
+        document.getElementById('valPiaci').innerText = pC.toLocaleString() + " Ft";
 
-        // ÉVES KERET SZÁMÍTÁSA
-        // Csak a 2025-11-01 utáni adatokat nézzük
-        let totalCons = 0;
-        historyLog.forEach(row => {
-            if(row.date.includes('2025') && (row.date.includes('NOVEMBER') || row.date.includes('DECEMBER')) || row.date.includes('2026')) {
-                totalCons += row.cons;
-            }
-        });
+        // Éves keret (Nov 1-től)
+        let total = 0;
+        history.forEach(row => total += row.cons);
+        if(curr > prev) total += (curr - prev);
         
-        // Ha van aktuális beírás, azt is hozzáadjuk ideiglenesen
-        if(curr > prev) totalCons += (curr - prev);
+        document.getElementById('totalCons').innerText = Math.round(total) + " kWh";
+        const rem = Y_LIMIT - total;
+        document.getElementById('remQuota').innerText = Math.round(rem) + " kWh";
+        
+        const monthsLeft = 8 - (new Date().getMonth()); // Augusztusig
+        document.getElementById('avgQuota').innerText = Math.round(rem / (monthsLeft || 1)) + " kWh/hó";
 
-        document.getElementById('totalConsumed').innerText = Math.round(totalCons) + " kWh";
-        const remaining = YEARLY_TOTAL_LIMIT - totalCons;
-        document.getElementById('remainingQuota').innerText = Math.round(remaining) + " kWh";
-        document.getElementById('remainingQuota').style.color = remaining < 500 ? 'var(--danger)' : 'var(--success)';
-
-        // Hátralévő hónapok augusztusig (februártól augusztusig = 7 hónap)
-        const now = new Date();
-        const end = new Date(now.getFullYear(), 7, 31); // Augusztus 31
-        const diffMonths = (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()) + 1;
-        document.getElementById('avgRemaining').innerText = Math.round(remaining / diffMonths) + " kWh/hó";
-
-        // Táblázat render (Csökkenő sorrend már az adatbázisban)
+        // History
         const tbody = document.getElementById('historyBody');
         tbody.innerHTML = '';
-        historyLog.forEach(row => {
-            tbody.innerHTML += `<tr>
-                <td>${row.date}</td>
-                <td><strong>${Math.round(row.cons)} kWh</strong></td>
-                <td style="text-align:right; font-weight:bold; color:var(--primary);">${Math.round(row.cost).toLocaleString()} Ft</td>
-            </tr>`;
+        history.forEach(row => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${row.date}</strong><br><small style="color:var(--dim)">Óra: ${row.read}</small></td>
+                    <td>${row.cons} kWh</td>
+                    <td class="cost-td">${row.cost.toLocaleString()} Ft</td>
+                </tr>`;
         });
 
-        // Mentés beállítások
-        let toSave = { villanyTotal: parseFloat(document.getElementById('villanyTotal').value) };
-        CONFIG.forEach(item => toSave[item.id] = parseFloat(document.getElementById(`inp_${item.id}`).value));
-        localStorage.setItem('expense_settings', JSON.stringify(toSave));
+        // Mentés settings
+        let s = { villanyTotal: parseFloat(document.getElementById('villanyTotal').value) };
+        CONFIG.forEach(item => s[item.id] = parseFloat(document.getElementById(`inp_${item.id}`).value));
+        localStorage.setItem('expense_settings', JSON.stringify(s));
     }
 
-    function saveData() {
+    function saveNewMonth() {
         const curr = parseFloat(document.getElementById('mvmCurr').value);
         const prev = parseFloat(document.getElementById('mvmPrev').value);
-        if(!curr || curr <= prev) return alert("Hiba az óraállásnál!");
-
-        const cons = Math.round(curr - prev);
-        const cost = Math.round(Math.min(cons, MONTHLY_LIMIT) * P_REZSI) + Math.round(Math.max(0, cons - MONTHLY_LIMIT) * P_PIACI);
+        if(!curr || curr <= prev) return alert("Hibás óraállás!");
         
-        // Új adat az elejére kerül (UNSHIFT), így lesz csökkenő
-        historyLog.unshift({
-            date: document.getElementById('currentMonthDate').innerText,
-            read: Math.round(curr),
+        const cons = Math.round(curr - prev);
+        const cost = Math.round(Math.min(cons, M_LIMIT) * P_REZSI) + Math.round(Math.max(0, cons - M_LIMIT) * P_PIACI);
+
+        history.unshift({
+            date: document.getElementById('currentDateDisp').innerText,
+            read: curr,
             cons: cons,
             cost: cost
         });
 
-        localStorage.setItem('secure_history_v1', JSON.stringify(historyLog));
-        document.getElementById('mvmPrev').value = Math.round(curr);
-        document.getElementById('mvmCurr').value = '';
-        updateAll();
-        alert("Hónap sikeresen mentve!");
+        localStorage.setItem('secure_history_v1', JSON.stringify(history));
+        location.reload();
     }
 
-    function sharePDF() {
-        const el = document.getElementById('contentToExport');
-        document.body.classList.add('pdf-mode');
+    function exportPDFPro() {
+        const dashPage = document.getElementById('page-dashboard');
+        const inputPage = document.getElementById('page-inputs');
+        
+        // Előkészítés PDF-hez: mindkét oldal legyen látható egy pillanatra a rendereléshez
+        dashPage.classList.add('active');
+        inputPage.classList.add('active');
+        document.body.classList.add('pdf-export-mode');
+        
+        const element = document.createElement('div');
+        element.className = 'pdf-content';
+        element.innerHTML = `
+            <div style="text-align:center; margin-bottom:30px;">
+                <h1 style="color:#1e293b; font-size:24px;">HAVI REZSI KIMUTATÁS</h1>
+                <p style="color:#64748b; font-weight:bold;">${document.getElementById('currentDateDisp').innerText}</p>
+            </div>
+            ${dashPage.innerHTML}
+            <div style="page-break-before: always; margin-top:40px;">
+                <h2 style="color:#1e293b; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">RÉSZLETES FIX KÖLTSÉGEK</h2>
+                ${inputPage.querySelector('#fixExpensesList').parentElement.innerHTML}
+            </div>
+        `;
+
         const opt = {
             margin: 0,
-            filename: 'Elszamolas.pdf',
+            filename: 'Elszamolas_Pro.pdf',
             image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 2, scrollY: 0 },
+            html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-        html2pdf().set(opt).from(el).save().then(() => document.body.classList.remove('pdf-mode'));
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            document.body.classList.remove('pdf-export-mode');
+            showPage('dashboard');
+        });
     }
 
     init();
