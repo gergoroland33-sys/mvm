@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Rezsi Manager v26 - Digital Report</title>
+<title>Rezsi Manager v27 - High Fidelity</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -13,23 +13,32 @@
         --success: #10b981; --danger: #ef4444;
     }
     * { box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); margin: 0; padding: 0; padding-top: 160px; padding-bottom: 90px; }
+    body { background: var(--bg); color: var(--text); margin: 0; padding: 0; padding-top: 190px; padding-bottom: 90px; }
 
-    /* --- 1. STICKY DASHBOARD (ÉLŐ) --- */
+    /* --- 1. STICKY DASHBOARD (RÉSZLETES) --- */
     .sticky-dashboard {
         position: fixed; top: 0; left: 0; width: 100%; z-index: 2000;
         background: rgba(11, 15, 25, 0.98); backdrop-filter: blur(10px);
-        border-bottom: 1px solid var(--border); padding: 15px 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        border-bottom: 1px solid var(--primary); padding: 15px 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     }
     .db-top { display: flex; justify-content: space-between; align-items: end; margin-bottom: 5px; }
     .db-big { font-size: 1.4rem; font-weight: 900; color: white; }
     .db-lbl { font-size: 0.65rem; color: var(--dim); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
     
-    .progress-container { position: relative; height: 16px; background: #1f2937; border-radius: 8px; overflow: hidden; margin-top: 8px; border: 1px solid var(--border); }
+    .progress-container { position: relative; height: 20px; background: #1f2937; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid var(--border); }
     .progress-bar { height: 100%; transition: width 0.5s ease; border-right: 2px solid rgba(0,0,0,0.5); }
-    .time-indicator { position: absolute; top: 0; bottom: 0; width: 2px; background: white; z-index: 10; box-shadow: 0 0 10px white; }
-    .status-text { text-align: center; font-size: 0.75rem; margin-top: 8px; font-weight: 700; color: var(--dim); }
+    
+    .time-indicator { 
+        position: absolute; top: 0; bottom: 0; width: 2px; background: white; z-index: 10; 
+        box-shadow: 0 0 10px white;
+    }
+    
+    .detailed-stats {
+        display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--dim); margin-top: 8px;
+        background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 6px;
+    }
+    .stat-box strong { display: block; color: white; font-size: 0.75rem; }
 
     /* --- TABS --- */
     .nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: #151e2e; border-top: 1px solid var(--border); display: flex; z-index: 1000; }
@@ -44,7 +53,7 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* --- CARDS --- */
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 15px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 15px; position: relative; }
     .card.active { border: 1px solid var(--primary); background: #1e2837; }
     .c-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
     .c-title { font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase; }
@@ -62,7 +71,6 @@
     /* --- FAMILY --- */
     .hero { background: linear-gradient(135deg, #1e3a8a, #172554); text-align: center; padding: 25px; border: 1px solid var(--primary); }
     .pay-val { color: white; font-size: 2.5rem; font-weight: 900; margin: 10px 0; letter-spacing: -1px; }
-    
     .fix-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--border); }
     .fix-name-in { background: transparent; border: none; color: #cbd5e1; font-size: 0.9rem; width: 100%; font-weight: bold; }
     .fix-val-in { background: #0b0f19; border: 1px solid var(--border); color: white; padding: 5px; border-radius: 6px; text-align: right; width: 90px; font-weight: bold; }
@@ -72,41 +80,26 @@
     /* --- FAB --- */
     .fab { position: fixed; bottom: 85px; right: 20px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: pointer; z-index: 100; font-weight: bold; }
 
-    /* --- PDF GENERÁLÓ KONTÉNER (REJTETT, CSAK A PDF MOTOR LÁTJA) --- */
-    #pdf-template {
+    /* --- PDF EXPORT CONTAINER (Ez a titok: egy klón, amit kinyomtatunk) --- */
+    #pdf-export-zone {
         display: none;
         width: 100%;
         max-width: 800px;
-        background-color: #0b0f19; /* Sötét háttér */
+        background-color: #0b0f19;
         color: #f1f5f9;
         font-family: 'Inter', sans-serif;
-        padding: 30px;
+        padding: 20px;
     }
-    /* PDF Styles */
-    .pdf-header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; margin-bottom: 20px; }
-    .pdf-card { background: #151e2e; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; page-break-inside: avoid; }
-    .pdf-title { font-size: 14px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
-    .pdf-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; border-bottom: 1px dashed #334155; }
-    .pdf-hl { color: #3b82f6; font-weight: bold; }
-    .pdf-warn { color: #ef4444; font-weight: bold; }
-    .pdf-ok { color: #10b981; font-weight: bold; }
     
-    .pdf-hero { background: linear-gradient(135deg, #1e3a8a, #172554); border: 2px solid #3b82f6; border-radius: 15px; padding: 30px; text-align: center; margin-bottom: 25px; }
-    .pdf-total { font-size: 40px; font-weight: 900; color: white; margin: 10px 0; }
-    
-    /* PDF Progress Bar */
-    .pdf-bar-bg { height: 15px; background: #334155; border-radius: 10px; position: relative; overflow: hidden; margin: 10px 0; }
-    .pdf-bar-fill { height: 100%; background: #10b981; }
-    .pdf-time-line { position: absolute; top:0; bottom:0; width:3px; background:white; z-index:10; }
-
-    /* PDF Mode Overrides */
-    .pdf-mode { background: #0b0f19 !important; }
-    .pdf-mode .sticky-dashboard, .pdf-mode .nav, .pdf-mode .fab { display: none !important; }
+    /* PDF Mode Styles - Force Dark Theme Consistency */
+    .pdf-mode .sticky-dashboard, .pdf-mode .nav, .pdf-mode .fab, .pdf-mode .add-btn, .pdf-mode .fix-del { display: none !important; }
+    .pdf-mode input { border: none !important; background: transparent !important; color: white !important; font-weight: 900 !important; }
+    .pdf-mode .card { box-shadow: none !important; border: 1px solid #334155 !important; page-break-inside: avoid; }
 </style>
 </head>
 <body>
 
-<div class="sticky-dashboard">
+<div class="sticky-dashboard" id="dashboard-ui">
     <div class="db-top">
         <div>
             <div class="db-lbl">ÖSSZ. FOGYASZTÁS</div>
@@ -122,43 +115,38 @@
         <div class="progress-bar" id="prog-bar" style="width:0%; background:var(--success)"></div>
         <div class="time-indicator" id="time-mark" style="left:0%"></div>
     </div>
-    <div class="status-text" id="status-msg">...</div>
+    
+    <div class="detailed-stats">
+        <div class="stat-box">
+            <span>Ideális máig:</span>
+            <strong id="stat-ideal">...</strong>
+        </div>
+        <div class="stat-box" style="text-align:right;">
+            <span>Egyenleg:</span>
+            <strong id="stat-diff" style="color:white;">...</strong>
+        </div>
+    </div>
 </div>
 
 <div id="page-elec" class="page active">
-    <div style="margin-bottom:10px; text-align:center; font-size:0.7rem; color:var(--dim); font-weight:bold;">
-        AUTOMATIKUS MENTÉS AKTÍV
-    </div>
     <div id="month-list"></div>
 </div>
 
 <div id="page-family" class="page">
-    <div class="card hero">
+    <div class="card hero" id="family-hero">
         <div style="font-size:0.7rem; color:#bfdbfe; font-weight:800; letter-spacing:2px;">UTALANDÓ (ANYU RÉSZE)</div>
         <div class="pay-val" id="family-total">0 Ft</div>
         <div style="font-size:0.75rem; color:#bfdbfe;">(Villany fele + Fixek 100%)</div>
     </div>
 
-    <div class="card">
-        <div class="c-header"><span class="c-title">FIX KÖLTSÉGEK LISTÁJA</span></div>
+    <div class="card" id="family-fixes">
+        <div class="c-header"><span class="c-title">FIX KÖLTSÉGEK</span></div>
         <div id="fix-container"></div>
         <button class="add-btn" onclick="addFix()">+ ÚJ TÉTEL</button>
     </div>
-    
-    <div class="card" style="margin-top:20px;">
-        <div class="c-header"><span class="c-title">AKTUÁLIS HÓNAP RÉSZLETEI</span></div>
-        <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px dashed var(--border);">
-            <span style="color:#cbd5e1;">Teljes MVM Áramszámla</span>
-            <span style="font-weight:bold; color:white;" id="det-mvm-full">0 Ft</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; padding:10px 0; color:var(--primary);">
-            <span>Ennek a fele (Anyu)</span>
-            <span style="font-weight:900;" id="det-mvm-half">0 Ft</span>
-        </div>
-    </div>
 </div>
 
-<div class="fab" onclick="shareReport()">📤</div>
+<div class="fab" onclick="exportPDF()">📄</div>
 
 <div class="nav">
     <div class="nav-item active" id="nav-elec" onclick="switchTab('elec')">
@@ -171,10 +159,16 @@
     </div>
 </div>
 
-<div id="pdf-template"></div>
+<div id="pdf-export-zone">
+    <div style="text-align:center; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:10px;">
+        <h1 style="color:#3b82f6; margin:0; font-size:1.5rem;">REZSI ELSZÁMOLÁS</h1>
+        <div style="color:#94a3b8; font-size:0.8rem;">Digitális Kimutatás</div>
+    </div>
+    <div id="pdf-content-target"></div>
+</div>
 
 <script>
-    // --- BÁZIS ADATOK ---
+    // --- KONFIGURÁCIÓ ---
     const START_METER = 17232.475; 
     const LIMITS = { mo: 210, yr: 8700 };
     const PRICES = { r: 36.386, p: 70.104 }; 
@@ -202,12 +196,12 @@
     };
 
     // --- STATE ---
-    let readings = JSON.parse(localStorage.getItem('v24_readings')) || HARDCODED_HISTORY;
+    let readings = JSON.parse(localStorage.getItem('v27_readings')) || HARDCODED_HISTORY;
     if (Object.keys(readings).length < Object.keys(HARDCODED_HISTORY).length) {
         readings = { ...HARDCODED_HISTORY, ...readings };
     }
 
-    let fixItems = JSON.parse(localStorage.getItem('v24_fixes')) || [
+    let fixItems = JSON.parse(localStorage.getItem('v27_fixes')) || [
         { name: 'TV Előfizetés', val: 7142 },
         { name: 'Telefon', val: 4500 },
         { name: 'Internet', val: 2880 },
@@ -320,22 +314,37 @@
         
         const bar = document.getElementById('prog-bar');
         const mark = document.getElementById('time-mark');
-        const msg = document.getElementById('status-msg');
         
         bar.style.width = Math.min(pct, 100) + "%";
         
+        // Idővonal számítás (Szept 1 - Aug 31)
         const start = new Date('2025-08-31');
         const end = new Date('2026-08-31');
         const now = new Date();
-        const timePct = ((now - start) / (end - start)) * 100;
-        mark.style.left = Math.min(Math.max(timePct,0),100) + "%";
+        const totalTime = end - start;
+        const passedTime = now - start;
+        let timePct = (passedTime / totalTime) * 100;
+        timePct = Math.min(Math.max(timePct, 0), 100);
         
-        if(pct > timePct) {
-            bar.style.background = "var(--danger)";
-            msg.innerHTML = "<span style='color:var(--danger)'>TÚLLÉPÉS!</span> A fogyasztás megelőzte az időt.";
-        } else {
+        mark.style.left = timePct + "%";
+        
+        // Részletes becslés
+        const daysTotal = 365;
+        const daysPassed = Math.floor(passedTime / (1000 * 60 * 60 * 24));
+        const idealCons = (LIMITS.yr / daysTotal) * daysPassed;
+        const diff = idealCons - total; // Pozitív = spórolás
+        
+        document.getElementById('stat-ideal').innerText = idealCons.toFixed(0) + " kWh";
+        const diffEl = document.getElementById('stat-diff');
+        
+        if (diff >= 0) {
             bar.style.background = "var(--success)";
-            msg.innerHTML = "<span style='color:var(--success)'>RENDBEN.</span> A fogyasztás az idő alatt van.";
+            diffEl.innerText = `+${diff.toFixed(0)} kWh (Tartalék)`;
+            diffEl.style.color = "var(--success)";
+        } else {
+            bar.style.background = "var(--danger)";
+            diffEl.innerText = `${diff.toFixed(0)} kWh (Túllépés)`;
+            diffEl.style.color = "var(--danger)";
         }
     }
 
@@ -344,36 +353,33 @@
         fixItems.forEach(i => fixSum += Number(i.val));
         const mvmHalf = Math.round(lastCalculatedMvm / 2);
         const grand = mvmHalf + fixSum;
-        
         document.getElementById('family-total').innerText = grand.toLocaleString() + " Ft";
-        document.getElementById('det-mvm-full').innerText = lastCalculatedMvm.toLocaleString() + " Ft";
-        document.getElementById('det-mvm-half').innerText = mvmHalf.toLocaleString() + " Ft";
     }
 
     function updateRead(id, val) {
         if(val) readings[id] = parseFloat(val);
         else delete readings[id];
-        localStorage.setItem('v24_readings', JSON.stringify(readings));
+        localStorage.setItem('v27_readings', JSON.stringify(readings));
         calcAll();
     }
 
     function updateFix(idx, field, val) {
         fixItems[idx][field] = val;
-        localStorage.setItem('v24_fixes', JSON.stringify(fixItems));
+        localStorage.setItem('v27_fixes', JSON.stringify(fixItems));
         updateFamily();
     }
 
     function addFix() {
         fixItems.push({ name: 'Új', val: 0 });
         renderFixes();
-        localStorage.setItem('v24_fixes', JSON.stringify(fixItems));
+        localStorage.setItem('v27_fixes', JSON.stringify(fixItems));
     }
 
     function delFix(idx) {
         if(confirm("Törlés?")) {
             fixItems.splice(idx, 1);
             renderFixes();
-            localStorage.setItem('v24_fixes', JSON.stringify(fixItems));
+            localStorage.setItem('v27_fixes', JSON.stringify(fixItems));
             updateFamily();
         }
     }
@@ -386,111 +392,70 @@
         window.scrollTo(0,0);
     }
 
-    // --- DIGITÁLIS JELENTÉS (SÖTÉT MÓD PDF) ---
-    function shareReport() {
-        const pc = document.getElementById('pdf-template');
-        pc.style.display = 'block'; // Láthatóvá tesszük a generáláshoz
-        pc.innerHTML = ''; // Törlés
-
-        // 1. CÍM
-        pc.innerHTML += `
-            <div class="pdf-header">
-                <h1 style="color:#3b82f6; margin:0;">REZSI JELENTÉS</h1>
-                <div style="font-size:12px; color:#94a3b8;">${new Date().toLocaleDateString()}</div>
-            </div>`;
-
-        // 2. ÉVES HELYZET (GRAFIKUS)
-        // Kiszámoljuk újra a PDF-hez
-        let totalCons = 0;
-        let prev = START_METER;
-        MONTHS.forEach(m => {
-            if(readings[m.id] && readings[m.id] > prev) {
-                totalCons += (readings[m.id] - prev);
-                prev = readings[m.id];
-            }
-        });
-        const pct = Math.min((totalCons/LIMITS.yr)*100, 100);
+    // --- HIGH FIDELITY PDF ---
+    function exportPDF() {
+        const target = document.getElementById('pdf-content-target');
+        const zone = document.getElementById('pdf-export-zone');
+        target.innerHTML = '';
         
-        // Idővonal
-        const start = new Date('2025-08-31');
-        const end = new Date('2026-08-31');
-        const now = new Date();
-        const timePct = Math.min(Math.max(((now-start)/(end-start))*100,0),100);
-        const barColor = pct > timePct ? '#ef4444' : '#10b981';
-        const barText = pct > timePct ? 'TÚLLÉPÉS VÁRHATÓ' : 'RENDBEN (KERETEN BELÜL)';
+        // 1. Klónozzuk a DASHBOARD-ot (Sticky sáv)
+        const dashboardClone = document.getElementById('dashboard-ui').cloneNode(true);
+        dashboardClone.style.position = 'static'; // PDF-ben nem lehet sticky
+        dashboardClone.style.marginBottom = '20px';
+        dashboardClone.style.borderRadius = '12px';
+        dashboardClone.style.border = '1px solid #334155';
+        target.appendChild(dashboardClone);
 
-        pc.innerHTML += `
-            <div class="pdf-card">
-                <div class="pdf-title">ÉVES "JÓSDA" ÁLLAPOT</div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>Fogyasztás: <b>${totalCons.toFixed(1)} kWh</b></span>
-                    <span style="color:${barColor}">${barText}</span>
-                </div>
-                <div class="pdf-bar-bg">
-                    <div class="pdf-bar-fill" style="width:${pct}%; background:${barColor};"></div>
-                    <div class="pdf-time-line" style="left:${timePct}%"></div>
-                </div>
-                <div style="font-size:10px; color:#94a3b8; text-align:center;">(Színes csík = Fogyasztás | Fehér vonal = Idő)</div>
-            </div>`;
+        // 2. Klónozzuk a CSALÁDI PÉNZÜGYI KÁRTYÁKAT
+        const familyHero = document.getElementById('family-hero').cloneNode(true);
+        target.appendChild(familyHero);
+        
+        const familyFixes = document.getElementById('family-fixes').cloneNode(true);
+        // Töröljük a gombokat a PDF-ből
+        const btns = familyFixes.querySelectorAll('button, .fix-del');
+        btns.forEach(b => b.remove());
+        // Inputokat cseréljük szövegre a szép megjelenésért
+        const inputs = familyFixes.querySelectorAll('input');
+        inputs.forEach(inp => {
+            const span = document.createElement('span');
+            span.innerText = inp.value + (inp.classList.contains('fix-val-in') ? ' Ft' : '');
+            span.style.color = 'white';
+            span.style.fontWeight = 'bold';
+            inp.parentNode.replaceChild(span, inp);
+        });
+        target.appendChild(familyFixes);
 
-        // 3. PÉNZÜGYI BOX
-        let fixSum = 0; fixItems.forEach(f => fixSum += Number(f.val));
-        const mvmHalf = Math.round(lastCalculatedMvm / 2);
-        const grand = mvmHalf + fixSum;
-
-        pc.innerHTML += `
-            <div class="pdf-hero">
-                <div style="font-size:14px; color:#bfdbfe;">UTALANDÓ VÉGÖSSZEG (ANYU)</div>
-                <div class="pdf-total">${grand.toLocaleString()} Ft</div>
-                <div style="font-size:12px;">Villany Fele (${mvmHalf}) + Fixek (${fixSum})</div>
-            </div>`;
-
-        // 4. RÉSZLETEK
-        let tableHtml = '';
-        prev = START_METER;
-        MONTHS.forEach(m => {
-            const curr = readings[m.id];
-            if(curr && curr > prev) {
-                let c = curr - prev;
-                let r = Math.min(c, LIMITS.mo);
-                let p = Math.max(0, c - LIMITS.mo);
-                let cost = Math.round(r*PRICES.r + p*PRICES.p);
-                let stat = p > 0 ? `<span class="pdf-warn">TÚLLÉPÉS</span>` : `<span class="pdf-ok">OK</span>`;
-                
-                tableHtml += `
-                <div class="pdf-row">
-                    <div style="width:30%">${m.name}</div>
-                    <div style="width:20%; text-align:right;">${c.toFixed(1)} kWh</div>
-                    <div style="width:30%; text-align:right;" class="pdf-hl">${cost.toLocaleString()} Ft</div>
-                    <div style="width:20%; text-align:right;">${stat}</div>
-                </div>`;
-                prev = curr;
+        // 3. Klónozzuk az ÁRAM LISTÁT (De csak amiben van adat)
+        const monthList = document.getElementById('month-list').cloneNode(true);
+        const cards = monthList.querySelectorAll('.card');
+        cards.forEach(card => {
+            const input = card.querySelector('input');
+            if(!input.value) {
+                card.remove(); // Üreseket ne mutassuk
+            } else {
+                // Input helyett legyen szöveg
+                const valSpan = document.createElement('span');
+                valSpan.innerText = input.value;
+                valSpan.style.fontWeight = '900';
+                valSpan.style.color = 'white';
+                valSpan.style.fontSize = '1.2rem';
+                input.parentNode.replaceChild(valSpan, input);
             }
         });
-
-        pc.innerHTML += `<div class="pdf-card"><div class="pdf-title">VILLANY RÉSZLETEZÉS</div>${tableHtml}</div>`;
-
-        // 5. FIX LISTA
-        let fixHtml = '';
-        fixItems.forEach(f => {
-            fixHtml += `<div class="pdf-row"><span>${f.name}</span><b>${Number(f.val).toLocaleString()} Ft</b></div>`;
-        });
-        pc.innerHTML += `<div class="pdf-card"><div class="pdf-title">FIX KÖLTSÉGEK</div>${fixHtml}</div>`;
+        target.appendChild(monthList);
 
         // GENERATE
-        document.body.classList.add('pdf-mode');
-        
+        zone.style.display = 'block';
         const opt = { 
             margin: 0, 
-            filename: 'Rezsi_Jelentes.pdf', 
+            filename: 'Rezsi_Pro_Jelentes.pdf', 
             image: { type: 'jpeg', quality: 0.98 }, 
             html2canvas: { scale: 2, backgroundColor: '#0b0f19' }, 
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
         };
 
-        html2pdf().set(opt).from(pc).save().then(() => {
-            pc.style.display = 'none';
-            document.body.classList.remove('pdf-mode');
+        html2pdf().set(opt).from(zone).save().then(() => {
+            zone.style.display = 'none';
         });
     }
 
