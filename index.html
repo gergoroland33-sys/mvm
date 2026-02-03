@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -11,7 +10,7 @@
 :root {
     --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --accent: #f59e0b;
     --text: #f8fafc; --dim: #94a3b8; --border: #334155; --success: #10b981;
-    --danger: #ef4444; /* Piros a piaci árhoz */
+    --danger: #ef4444; 
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
@@ -45,6 +44,44 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
     border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
 }
 .title-left { display: flex; align-items: center; gap: 8px; }
+
+/* --- ÚJ: ÉVES MONITOR STÍLUSOK --- */
+.quota-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+.quota-val-big { font-size: 1.5rem; font-weight: 900; color: white; }
+.quota-sub { font-size: 0.75rem; color: var(--dim); }
+
+.progress-container {
+    position: relative; height: 24px; background: rgba(0,0,0,0.3);
+    border-radius: 12px; overflow: hidden; margin: 10px 0;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.progress-bar {
+    height: 100%; transition: width 0.5s ease, background 0.3s;
+    background: linear-gradient(90deg, var(--primary), var(--success));
+    position: relative;
+    border-radius: 12px 0 0 12px;
+}
+.progress-bar.warning { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+
+/* Idővonal marker */
+.time-marker {
+    position: absolute; top: 0; bottom: 0; width: 2px; background: white;
+    z-index: 10; box-shadow: 0 0 10px rgba(255,255,255,0.8);
+}
+.marker-label {
+    position: absolute; top: -20px; transform: translateX(-50%);
+    font-size: 0.6rem; color: white; background: var(--bg);
+    padding: 2px 5px; border-radius: 4px; border: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.quota-stats { display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.75rem; color: var(--dim); }
+.stat-box { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; flex: 1; text-align: center; margin: 0 2px; }
+.stat-box strong { display: block; font-size: 0.9rem; color: white; margin-bottom: 2px; }
+.stat-status { font-weight: bold; }
+.status-good { color: var(--success); }
+.status-bad { color: var(--danger); }
+/* ------------------------------- */
 
 /* SZERKESZTÉS GOMB */
 .edit-btn {
@@ -98,7 +135,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .mvm-field label { display: block; font-size: 0.7rem; color: var(--dim); margin-bottom: 3px; }
 .mvm-field input { width: 100%; background: transparent; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; font-weight: bold; text-align: center; }
 
-/* Új MVM Statisztika elrendezés */
+/* MVM Statisztika elrendezés */
 .mvm-stat-container {
     grid-column: span 2; 
     border-top: 1px solid rgba(255,255,255,0.1); 
@@ -110,8 +147,6 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 }
 .stat-main { font-weight: 800; font-size: 1rem; color: var(--accent); }
 .stat-sub { font-size: 0.75rem; color: var(--dim); display: block; text-align: right; }
-.split-val { color: var(--success); } /* Rezsi szín */
-.split-val.over { color: var(--danger); } /* Piaci szín */
 
 table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 th { text-align: left; color: var(--dim); padding: 8px; border-bottom: 1px solid var(--border); font-size: 0.7rem; text-transform: uppercase; }
@@ -120,7 +155,6 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .cons-col { text-align: right; color: var(--dim); font-size: 0.8rem; }
 .cost-col { font-weight: 700; text-align: right; color: var(--primary); }
 
-/* Részletező szöveg a táblázatban */
 .breakdown-text { font-size: 0.65rem; color: var(--dim); display: block; margin-top: 2px; font-weight: normal; }
 .breakdown-split { color: var(--success); }
 .breakdown-over { color: var(--danger); }
@@ -144,39 +178,36 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 /* PRÉMIUM PDF DESIGN                        */
 /* ========================================= */
 .pdf-export-mode {
-    background: #ffffff !important;
-    padding: 20px !important;
-    color: #1e293b !important;
-    -webkit-print-color-adjust: exact !important;
+    background: #ffffff !important; padding: 20px !important; color: #1e293b !important; -webkit-print-color-adjust: exact !important;
 }
 .pdf-export-mode .header { margin-bottom: 30px !important; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; }
 .pdf-export-mode h1 { font-size: 2rem !important; background: none !important; -webkit-text-fill-color: #1e293b !important; color: #1e293b !important; }
 .pdf-export-mode .subtitle { font-size: 1.1rem !important; color: #3b82f6 !important; font-weight: 900 !important; margin-top: 5px; }
 .pdf-export-mode .card {
     background: #f8fafc !important; border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important; margin-bottom: 20px !important;
-    border-radius: 8px !important; page-break-inside: avoid !important;
+    box-shadow: none !important; margin-bottom: 20px !important; border-radius: 8px !important; page-break-inside: avoid !important;
 }
 .pdf-export-mode .card-title { color: #475569 !important; border-bottom: 1px solid #cbd5e1 !important; }
 .pdf-export-mode input { color: #0f172a !important; border: none !important; font-weight: 800 !important; }
-
 .pdf-export-mode .highlight-row { background: #eff6ff !important; border: 1px solid #bfdbfe !important; }
 .pdf-export-mode .hl-label { color: #2563eb !important; }
 .pdf-export-mode .total-box { background: #fffbeb !important; border: 2px solid #f59e0b !important; color: #000 !important; page-break-inside: avoid !important; }
 .pdf-export-mode .total-label { color: #b45309 !important; font-size: 1rem !important; }
 .pdf-export-mode .total-amount { color: #b45309 !important; text-shadow: none !important; font-size: 3rem !important; }
-
 .pdf-export-mode table { width: 100%; border: 1px solid #cbd5e1 !important; margin-top: 10px; }
 .pdf-export-mode th { background: #e2e8f0 !important; color: #475569 !important; font-weight: 800 !important; border: 1px solid #cbd5e1; }
 .pdf-export-mode td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
 .pdf-export-mode .cost-col { color: #2563eb !important; }
 .pdf-export-mode .live-row { background: #dbeafe !important; border-bottom: 2px solid #2563eb !important; }
-
-/* Színek a PDF-ben a részletezéshez */
-.pdf-export-mode .breakdown-split { color: #059669 !important; } /* Rezsi zöld */
-.pdf-export-mode .breakdown-over { color: #dc2626 !important; } /* Piaci piros */
-
+.pdf-export-mode .breakdown-split { color: #059669 !important; } 
+.pdf-export-mode .breakdown-over { color: #dc2626 !important; } 
 .pdf-export-mode .edit-btn, .pdf-export-mode .fab-group, .pdf-export-mode .refresh-btn, .pdf-export-mode .mvm-mini { display: none !important; } 
+/* PDF-ben a progress bar átalakítása */
+.pdf-export-mode .progress-container { background: #e2e8f0 !important; border: 1px solid #cbd5e1 !important; }
+.pdf-export-mode .progress-bar { -webkit-print-color-adjust: exact !important; }
+.pdf-export-mode .time-marker { background: #334155 !important; }
+.pdf-export-mode .marker-label { color: #334155 !important; background: transparent !important; font-weight:bold; top: -25px; border:none; }
+.pdf-export-mode .quota-val-big { color: #1e293b !important; }
 
 </style>
 </head>
@@ -196,6 +227,47 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
         <button class="refresh-btn" onclick="location.reload()" title="Oldal frissítése">↻</button>
     </div>
 
+    <div class="card" id="quotaCard">
+        <div class="card-title">
+            <div class="title-left"><i>📊</i> ÉVES KERET (Szept-Aug)</div>
+        </div>
+        
+        <div class="quota-header">
+            <div>
+                <span class="quota-sub">Felhasznált / 8700 kWh</span>
+                <div class="quota-val-big" id="qUsedVal">0 kWh</div>
+            </div>
+            <div style="text-align:right">
+                <span class="quota-sub">Hátralévő</span>
+                <div style="font-weight:bold; color:var(--dim)" id="qRemainVal">8700 kWh</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="time-marker" id="timeMarker" style="left: 0%;">
+                <div class="marker-label" id="markerLabel">MA</div>
+            </div>
+            <div class="progress-bar" id="usageBar" style="width: 0%;"></div>
+        </div>
+
+        <div class="quota-stats">
+            <div class="stat-box">
+                <strong id="qTimePct">0%</strong>
+                Idő eltelt
+            </div>
+            <div class="stat-box">
+                <strong id="qUsedPct">0%</strong>
+                Keret fogyott
+            </div>
+            <div class="stat-box">
+                <strong id="qStatusDiff" class="stat-status">0 kWh</strong>
+                <span id="qStatusText">Ideális</span>
+            </div>
+        </div>
+        <div style="text-align:center; font-size:0.65rem; color:var(--dim); margin-top:8px;">
+            A mutató az éves 8700 kWh átlaghoz viszonyít. Ha a csík elhagyja a jelölőt, túlfogyasztásban vagy.
+        </div>
+    </div>
     <div class="card">
         <div class="card-title">
             <div class="title-left"><i>💰</i> HAVI KÖLTSÉGEK</div>
@@ -282,6 +354,7 @@ const DEFAULT_ITEMS = [
     { id: 'komm', name: 'Kommunális adó', val: 600 },
 ];
 const MVM_LIMIT = 210; const P_REZSI = 36.386; const P_PIACI = 70.104;
+const YEARLY_QUOTA = 8700; // Éves keret
 
 const now = new Date();
 const monthNames = ["JANUÁR","FEBRUÁR","MÁRCIUS","ÁPRILIS","MÁJUS","JÚNIUS","JÚLIUS","AUGUSZTUS","SZEPTEMBER","OKTÓBER","NOVEMBER","DECEMBER"];
@@ -339,7 +412,73 @@ function calc() {
     return grand;
 }
 
-// --- ÚJ SZÁMOLÓ ÉS TÁBLÁZAT FRISSÍTŐ ---
+// --- ÚJ: ÉVES KERET SZÁMOLÁS (PRO MODE) ---
+function updateYearlyQuota(liveConsumption = 0) {
+    // 1. Ciklus meghatározása (Szept 1 - Aug 31)
+    const today = new Date();
+    let startYear = today.getMonth() >= 8 ? today.getFullYear() : today.getFullYear() - 1; 
+    const cycleStart = new Date(startYear, 8, 1); // Szeptember 1
+    const cycleEnd = new Date(startYear + 1, 8, 1); // Következő Szept 1
+    
+    // 2. Fogyasztás összegzése a ciklusban
+    let totalUsed = 0;
+    historyLog.forEach(entry => {
+        const entryDate = new Date(entry.date);
+        if(entryDate >= cycleStart && entryDate < cycleEnd) {
+            totalUsed += entry.cons;
+        }
+    });
+    totalUsed += liveConsumption; // Hozzáadjuk, amit épp gépelsz
+
+    // 3. Idő előrehaladás kiszámítása
+    const totalDays = (cycleEnd - cycleStart) / (1000 * 60 * 60 * 24);
+    const daysPassed = (today - cycleStart) / (1000 * 60 * 60 * 24);
+    let timePercent = (daysPassed / totalDays) * 100;
+    if(timePercent > 100) timePercent = 100;
+    if(timePercent < 0) timePercent = 0;
+
+    // 4. Használati százalék
+    let usagePercent = (totalUsed / YEARLY_QUOTA) * 100;
+    if(usagePercent > 100) usagePercent = 100;
+
+    // 5. DOM Frissítése
+    document.getElementById('qUsedVal').innerText = Math.round(totalUsed).toLocaleString() + " kWh";
+    document.getElementById('qRemainVal').innerText = (YEARLY_QUOTA - totalUsed).toLocaleString() + " kWh";
+    
+    document.getElementById('timeMarker').style.left = timePercent + "%";
+    document.getElementById('markerLabel').innerText = "MA (" + Math.round(timePercent) + "%)";
+    
+    const uBar = document.getElementById('usageBar');
+    uBar.style.width = usagePercent + "%";
+    
+    document.getElementById('qTimePct').innerText = Math.round(timePercent) + "%";
+    document.getElementById('qUsedPct').innerText = Math.round(usagePercent) + "%";
+
+    // Státusz elemzés (Piros vs Zöld)
+    const diff = usagePercent - timePercent;
+    const diffKwh = totalUsed - (YEARLY_QUOTA * (timePercent/100));
+    
+    const statusValEl = document.getElementById('qStatusDiff');
+    const statusTextEl = document.getElementById('qStatusText');
+
+    if(diff > 0) {
+        // TÚLFOGYASZTÁS
+        uBar.classList.add('warning');
+        statusValEl.innerText = "+" + Math.round(diffKwh) + " kWh";
+        statusValEl.className = "stat-status status-bad";
+        statusTextEl.innerText = "Túllépés";
+        statusTextEl.style.color = "#ef4444";
+    } else {
+        // SPÓROLÁS
+        uBar.classList.remove('warning');
+        statusValEl.innerText = Math.round(diffKwh) + " kWh"; // ez negatív lesz
+        statusValEl.className = "stat-status status-good";
+        statusTextEl.innerText = "Megtakarítás";
+        statusTextEl.style.color = "#10b981";
+    }
+}
+
+// --- SZÁMOLÓ ÉS TÁBLÁZAT FRISSÍTŐ ---
 function updateTable() {
     const tbody = document.getElementById('mvmHistoryBody');
     tbody.innerHTML = '';
@@ -379,7 +518,10 @@ function updateTable() {
     // UI frissítés (Felső doboz)
     document.getElementById('mvmCons').innerText = liveCons + " kWh";
     document.getElementById('mvmCostDisp').innerText = formatMoney(liveCost);
-    document.getElementById('mvmSplitDetail').innerHTML = detailText; // Itt jelenik meg a bontás fent
+    document.getElementById('mvmSplitDetail').innerHTML = detailText; 
+
+    // *** PRO UPDATE: Keretfigyelő frissítése élő adattal ***
+    updateYearlyQuota(liveCons);
 
     // 1. ÉLŐ SOR GENERÁLÁS (Bontással)
     if(hasLiveInput || curr > 0) {
@@ -407,9 +549,8 @@ function updateTable() {
         </tr>`;
     }
 
-    // 2. MENTETT ELŐZMÉNYEK GENERÁLÁS (Utólag számoljuk ki a bontást a megjelenítéshez)
+    // 2. MENTETT ELŐZMÉNYEK GENERÁLÁS
     [...historyLog].reverse().forEach(row => {
-        // Gyors újraszámolás a megjelenítéshez (hogy ne kelljen az adatbázist módosítani)
         let rCost = 0, pCost = 0;
         let cDetail = row.cons;
         
@@ -471,7 +612,7 @@ function save() {
         localStorage.setItem('secure_history_v1', JSON.stringify(historyLog));
         
         document.getElementById('mvmCurr').value = "";
-        updateTable();
+        updateTable(); // Ez frissíti a keretfigyelőt is
         alert("Sikeres mentés!");
     } else { alert("Mentsd el! (De előbb írj be új óraállást!)"); }
 }
@@ -511,7 +652,8 @@ function sharePDF() {
     });
 }
 
-updateTable();
+// Init
+updateTable(); // Ez hívja meg a updateYearlyQuota-t is
 calc();
 </script>
 </body>
