@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Családi Elszámolás - Smart</title>
+<title>Családi Elszámolás - Végleges</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -80,6 +80,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .stat-status { font-weight: bold; }
 .status-good { color: var(--success); }
 .status-bad { color: var(--danger); }
+.status-neutral { color: var(--dim); }
 
 /* VILLANY & EGYÉB INPUTOK */
 .edit-btn {
@@ -132,7 +133,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 }
 .mvm-field { display: flex; flex-direction: column; }
 .mvm-field label { font-size: 0.7rem; color: var(--dim); margin-bottom: 5px; text-transform:uppercase; font-weight:bold;}
-/* Fontos: type="text" hogy a pontokat kezelni tudjuk, de inputmode="numeric" hogy mobilon számokat adjon */
+/* Fontos: type="text" hogy a pontokat kezelni tudjuk, de inputmode="decimal" hogy mobilon számokat adjon */
 .mvm-field input { 
     width: 100%; background: transparent; border: 1px solid var(--border); 
     color: white; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; 
@@ -158,9 +159,14 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .read-col { font-size: 0.75rem; color: var(--dim); text-align: center; }
 .cons-col { text-align: right; font-weight: bold; font-size: 0.85rem; }
 .cost-col { font-weight: 700; text-align: right; color: var(--primary); }
-.del-col { width: 25px; text-align: center; }
-.del-btn { background: none; border: none; cursor: pointer; font-size: 0.9rem; opacity: 0.4; transition: 0.3s; padding: 0; }
-.del-btn:hover { opacity: 1; color: var(--danger); }
+/* Törlés gomb megjelenítése */
+.del-col { width: 30px; text-align: center; vertical-align: middle !important; }
+.del-btn { 
+    background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); 
+    color: var(--danger); border-radius: 6px; cursor: pointer; font-size: 1rem; 
+    padding: 5px 8px; transition: 0.2s; 
+}
+.del-btn:hover { background: var(--danger); color: white; }
 
 .breakdown-text { font-size: 0.65rem; color: var(--dim); display: block; margin-top: 2px; font-weight: normal; }
 .breakdown-split { color: var(--success); }
@@ -201,6 +207,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode .time-marker { background: #334155 !important; }
 .pdf-export-mode .marker-label { color: #334155 !important; background: transparent !important; font-weight:bold; top: -25px; border:none; }
 .pdf-export-mode .quota-val-big { color: #1e293b !important; }
+/* PDF-ben eltüntetjük a törlést */
 .pdf-export-mode .del-col, .pdf-export-mode .del-btn { display: none !important; }
 .pdf-export-mode th:last-child, .pdf-export-mode td:last-child { border: none !important; width: 0 !important; padding: 0 !important; } 
 
@@ -255,8 +262,8 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
                 Keret fogyott
             </div>
             <div class="stat-box">
-                <strong id="qStatusDiff" class="stat-status">0 kWh</strong>
-                <span id="qStatusText">Ideális</span>
+                <strong id="qStatusDiff" class="stat-status">...</strong>
+                <span id="qStatusText">Állapot</span>
             </div>
         </div>
         <div style="text-align:center; font-size:0.65rem; color:var(--dim); margin-top:8px;">
@@ -346,7 +353,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 </div>
 
 <script>
-// --- KONFIG ---
+// --- KONFIG (FRISSÍTETT ÁRAK A SZÁMLA ALAPJÁN) ---
 const DEFAULT_ITEMS = [
     { id: 'tv', name: 'TV Előfizetés', val: 7142 },
     { id: 'tel', name: 'Telefon', val: 4500 },
@@ -356,7 +363,11 @@ const DEFAULT_ITEMS = [
     { id: 'szemet', name: 'Szemét díj', val: 667 },
     { id: 'komm', name: 'Kommunális adó', val: 600 },
 ];
-const MVM_LIMIT = 210; const P_REZSI = 36.386; const P_PIACI = 70.104;
+// Pontosabb rezsi árak (A1 lakossági bruttó kb 36.9, Piaci kb 70.1)
+// A számlán: Energia + RHD + ÁFA. 
+const MVM_LIMIT = 210; 
+const P_REZSI = 36.9; 
+const P_PIACI = 70.1;
 const YEARLY_QUOTA = 8700; 
 
 const now = new Date();
@@ -409,17 +420,15 @@ function calc() {
     return grand;
 }
 
-// --- OKOS PARSER ---
-// Itt takarítjuk ki a pontokat és a szóközöket, hogy a 17.583 az 17583 legyen
+// --- OKOS PARSER (PONTOK KIVÉTELE) ---
 function getCleanNumber(id) {
     let el = document.getElementById(id);
     if (!el || !el.value) return 0;
     
     let raw = el.value.toString();
-    
-    // Pontok és szóközök törlése (ezres elválasztók)
+    // Eltávolítjuk a pontot és szóközt (ezres elválasztó)
     let clean = raw.replace(/\./g, '').replace(/\s/g, ''); 
-    // Vessző cseréje pontra (ha mégis lenne tizedes)
+    // Vesszőt pontra cseréljük (tizedes)
     clean = clean.replace(/,/g, '.');   
     
     return parseFloat(clean);
@@ -441,7 +450,7 @@ function getMonthRange(monthInputValue) {
     return { start, end, display };
 }
 
-// --- ÉVES KERET (Realtime frissül) ---
+// --- ÉVES KERET (JAVÍTOTT LOGIKA) ---
 function updateYearlyQuota(liveConsumption = 0) {
     const today = new Date();
     let startYear = today.getMonth() >= 8 ? today.getFullYear() : today.getFullYear() - 1; 
@@ -457,7 +466,7 @@ function updateYearlyQuota(liveConsumption = 0) {
         }
     });
 
-    // Élő adat hozzáadása a sávhoz, ha a dátum passzol
+    // Élő adat hozzáadása
     const monthInput = document.getElementById('billMonth').value;
     if(monthInput) {
         const range = getMonthRange(monthInput);
@@ -466,7 +475,6 @@ function updateYearlyQuota(liveConsumption = 0) {
             totalUsed += liveConsumption;
         }
     } else if (liveConsumption > 0) {
-        // Ha nincs dátum, de írsz számot, akkor is mozduljon a sáv
         totalUsed += liveConsumption; 
     }
 
@@ -491,24 +499,32 @@ function updateYearlyQuota(liveConsumption = 0) {
     document.getElementById('qTimePct').innerText = Math.round(timePercent) + "%";
     document.getElementById('qUsedPct').innerText = Math.round(usagePercent) + "%";
 
-    const diff = usagePercent - timePercent;
-    const diffKwh = totalUsed - (YEARLY_QUOTA * (timePercent/100));
-    
     const statusValEl = document.getElementById('qStatusDiff');
     const statusTextEl = document.getElementById('qStatusText');
 
-    if(diff > 0) {
-        uBar.classList.add('warning');
-        statusValEl.innerText = "+" + Math.round(diffKwh) + " kWh";
-        statusValEl.className = "stat-status status-bad";
-        statusTextEl.innerText = "Túllépés";
-        statusTextEl.style.color = "#ef4444";
+    // Ha nincs fogyasztás adat, akkor ne írjunk ki fals megtakarítást
+    if(totalUsed === 0) {
+        statusValEl.innerText = "0 kWh";
+        statusValEl.className = "stat-status status-neutral";
+        statusTextEl.innerText = "Várakozás adatra...";
+        statusTextEl.style.color = "#94a3b8";
     } else {
-        uBar.classList.remove('warning');
-        statusValEl.innerText = Math.round(diffKwh) + " kWh"; 
-        statusValEl.className = "stat-status status-good";
-        statusTextEl.innerText = "Megtakarítás";
-        statusTextEl.style.color = "#10b981";
+        const diff = usagePercent - timePercent;
+        const diffKwh = totalUsed - (YEARLY_QUOTA * (timePercent/100));
+
+        if(diff > 0) {
+            uBar.classList.add('warning');
+            statusValEl.innerText = "+" + Math.round(diffKwh) + " kWh";
+            statusValEl.className = "stat-status status-bad";
+            statusTextEl.innerText = "Túllépés";
+            statusTextEl.style.color = "#ef4444";
+        } else {
+            uBar.classList.remove('warning');
+            statusValEl.innerText = Math.round(diffKwh) + " kWh"; // Negatív, tehát jó
+            statusValEl.className = "stat-status status-good";
+            statusTextEl.innerText = "Megtakarítás";
+            statusTextEl.style.color = "#10b981";
+        }
     }
 }
 
@@ -537,9 +553,8 @@ function updateTable() {
     let consDetail = ""; 
     let hasLiveInput = false;
 
-    // Csak akkor számolunk, ha mindkét mezőben van érték és a záró nagyobb
-    if(readStart > 0 && readEnd > 0 && readEnd > readStart) {
-        liveCons = readEnd - readStart; // Kerekítés nélkül
+    if(readEnd > readStart) {
+        liveCons = readEnd - readStart; // Pontos float
         
         if(liveCons <= MVM_LIMIT) {
             rezsiResz = liveCons * P_REZSI;
@@ -557,12 +572,10 @@ function updateTable() {
         hasLiveInput = true;
     }
     
-    // UI frissítés - ha nincs input, nullázunk
     document.getElementById('mvmCons').innerText = hasLiveInput ? fmtKwh(liveCons) : "0,000 kWh";
     document.getElementById('mvmCostDisp').innerText = formatMoney(liveCost);
     document.getElementById('mvmSplitDetail').innerHTML = hasLiveInput ? detailText : "..."; 
 
-    // Itt hívjuk meg a fenti sáv frissítését!
     updateYearlyQuota(liveCons);
 
     // ÉLŐ SOR
@@ -603,17 +616,18 @@ function updateTable() {
 
     historyWithIndex.forEach(row => {
         let rCost = 0, pCost = 0;
-        let cDetail = row.cons;
         
         if(row.cons <= MVM_LIMIT) {
             rCost = row.cons * P_REZSI;
         } else {
             rCost = MVM_LIMIT * P_REZSI;
             pCost = (row.cons - MVM_LIMIT) * P_PIACI;
-            cDetail = `${fmtKwh(row.cons)} <br><span style="font-size:0.65rem">(${MVM_LIMIT} + ${fmtKwh(row.cons-MVM_LIMIT)})</span>`;
         }
         
-        if(row.cons <= MVM_LIMIT) cDetail = fmtKwh(row.cons);
+        let cDetail = fmtKwh(row.cons);
+        if(row.cons > MVM_LIMIT) {
+            cDetail = `${fmtKwh(row.cons)} <br><span style="font-size:0.65rem">(${MVM_LIMIT} + ${fmtKwh(row.cons-MVM_LIMIT)})</span>`;
+        }
 
         let breakdownHtml = "";
         if(pCost > 0) {
