@@ -397,7 +397,8 @@ const defaultHistory = [
     { date: '2025-11-01', read: 17814, cons: 557, cost: 32002, momTotal: 34000 },
     { date: '2025-12-01', read: 18372, cons: 861, cost: 53284, momTotal: 34000 }
 ];
-let historyLog = JSON.parse(localStorage.getItem('secure_history_v1')) || defaultHistory;
+// ITT JAVÍTOTTAM A KULCSOT: 'secure_history_pro'
+let historyLog = JSON.parse(localStorage.getItem('secure_history_pro')) || defaultHistory;
 
 // MATEK
 function formatMoney(num) { return Math.round(num).toLocaleString('hu-HU') + " Ft"; }
@@ -609,10 +610,11 @@ function save() {
     
     if(currMvm && currMvm > prevMvm) {
         historyLog.push({ date: new Date().toISOString().split('T')[0], read: currMvm, cons: cons, cost: cost, momTotal: momPays });
-        localStorage.setItem('secure_history_v1', JSON.stringify(historyLog));
+        // MENTÉSNÉL IS JAVÍTVA
+        localStorage.setItem('secure_history_pro', JSON.stringify(historyLog));
         
         document.getElementById('mvmCurr').value = "";
-        updateTable(); // Ez frissíti a keretfigyelőt is
+        updateTable(); 
         alert("Sikeres mentés!");
     } else { alert("Mentsd el! (De előbb írj be új óraállást!)"); }
 }
