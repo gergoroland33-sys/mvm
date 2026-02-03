@@ -3,343 +3,401 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Családi Elszámolás - Realtime Prognózis</title>
+<title>Családi Elszámolás - Prognózis Ultimate</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-:root {
-    --bg: #030712; --card: #111827; --primary: #3b82f6; --accent: #f59e0b;
-    --text: #f9fafb; --dim: #9ca3af; --border: #374151; --success: #10b981; --danger: #ef4444;
-}
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
-body { background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
+    :root {
+        --bg: #030712; --card: #111827; --primary: #3b82f6; --accent: #f59e0b;
+        --text: #f9fafb; --dim: #9ca3af; --border: #374151; --success: #10b981; --danger: #ef4444;
+    }
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
 
-.refresh-btn { position: fixed; top: 15px; right: 15px; z-index: 1001; background: var(--card); border: 1px solid var(--border); color: var(--primary); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .refresh-btn { position: fixed; top: 15px; right: 15px; z-index: 1001; background: var(--card); border: 1px solid var(--border); color: var(--primary); width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-.page { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.4s ease; }
-.page.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .page { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.5s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* HEADER */
-.header { text-align: center; padding: 20px 0; margin-bottom: 10px; }
-h1 { margin: 0; font-size: 1.5rem; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
+    /* HEADER */
+    .header { text-align: center; padding: 25px 0; }
+    h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+    .subtitle { color: var(--dim); font-size: 0.85rem; margin-top: 5px; font-weight: 600; }
 
-/* PROGNÓZIS BOX - KIEMELT */
-.prediction-box {
-    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
-    border-radius: 20px; padding: 20px; margin-bottom: 20px;
-    border: 1px solid var(--primary); box-shadow: 0 10px 30px rgba(59,130,246,0.2);
-}
-.pred-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 10px; }
-.pred-title { font-size: 0.75rem; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-.pred-main-val { font-size: 1.8rem; font-weight: 900; color: white; margin: 10px 0; }
-.pred-sub { font-size: 0.8rem; color: #e2e8f0; line-height: 1.5; }
-.status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
-.s-good { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-.s-bad { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    /* PROGNÓZIS KÁRTYA (A LÉNYEG) */
+    .prediction-card {
+        background: linear-gradient(145deg, #1e3a8a, #172554);
+        border: 1px solid var(--primary); border-radius: 24px; padding: 25px; margin-bottom: 25px;
+        box-shadow: 0 15px 40px rgba(30, 58, 138, 0.2); position: relative; overflow: hidden;
+    }
+    .prediction-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: var(--accent); }
+    
+    .pred-header { font-size: 0.75rem; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; }
+    .pred-text { font-size: 0.95rem; line-height: 1.7; color: #e0f2fe; }
+    .highlight { color: white; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.3); }
+    .status-good { color: var(--success); font-weight: 900; }
+    .status-bad { color: var(--danger); font-weight: 900; }
 
-/* KÁRTYÁK */
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
-.card-title { font-size: 0.75rem; font-weight: 800; color: var(--dim); margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid #2d3748; padding-bottom: 8px; }
+    /* STATISZTIKA GRID */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+    .stat-box { background: var(--card); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
+    .stat-label { font-size: 0.65rem; color: var(--dim); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 5px; }
+    .stat-value { font-size: 1.1rem; font-weight: 900; color: white; }
 
-/* FIZETENDŐ */
-.total-hero { text-align: center; padding: 10px 0; }
-.total-val { font-size: 3rem; font-weight: 900; color: white; letter-spacing: -1px; }
+    /* FIZETENDŐ */
+    .total-hero { text-align: center; padding: 20px 0; background: var(--card); border-radius: 24px; border: 1px solid var(--border); margin-bottom: 25px; }
+    .total-val { font-size: 3.2rem; font-weight: 900; color: white; letter-spacing: -1.5px; margin: 10px 0; }
+    .total-sub { font-size: 0.8rem; color: var(--dim); }
 
-/* TÁBLÁZAT */
-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-th { text-align: left; color: var(--dim); padding: 10px 5px; border-bottom: 1px solid var(--border); font-size: 0.7rem; text-transform: uppercase; }
-td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
-.t-date { font-weight: 700; color: white; display: block; }
-.t-sub { font-size: 0.7rem; color: var(--dim); }
-.t-cost { font-weight: 900; color: var(--primary); text-align: right; }
+    /* ELŐZMÉNYEK */
+    .history-card { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 5px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 15px; color: var(--dim); font-size: 0.7rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.85rem; color: #e2e8f0; }
+    .cost-col { text-align: right; font-weight: 800; color: var(--primary); }
 
-/* INPUTOK */
-.styled-in { width: 100%; background: #030712; border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: #fff; font-weight: 700; font-size: 1.1rem; outline: none; margin-bottom: 10px; transition: 0.2s; }
-.styled-in:focus { border-color: var(--primary); }
-.in-label { font-size: 0.7rem; font-weight: 800; color: var(--dim); display: block; margin-bottom: 5px; text-transform: uppercase; }
+    /* INPUTOK */
+    .input-card { background: var(--card); padding: 25px; border-radius: 24px; border: 1px solid var(--border); margin-bottom: 20px; }
+    .input-label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; }
+    .styled-input { width: 100%; background: #0b0f19; border: 1px solid var(--border); border-radius: 12px; padding: 16px; color: white; font-weight: 700; font-size: 1.2rem; outline: none; transition: 0.2s; }
+    .styled-input:focus { border-color: var(--primary); }
 
-/* NAV */
-.nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: #0f172a; display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: 15px; }
-.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--dim); font-size: 0.7rem; font-weight: 800; gap: 4px; cursor: pointer; }
-.nav-item.active { color: var(--primary); }
+    /* NAVIGÁCIÓ */
+    .nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 85px; background: #0b0f19; border-top: 1px solid var(--border); display: flex; z-index: 1000; padding-bottom: 20px; }
+    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--dim); gap: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .nav-btn.active { color: var(--primary); background: rgba(59, 130, 246, 0.05); }
+    .nav-icon { font-size: 1.4rem; }
 
-/* PDF */
-.pdf-mode { background: white !important; color: black !important; padding: 20px !important; }
-.pdf-mode .prediction-box, .pdf-mode .card { background: white !important; border: 1px solid #ccc !important; color: black !important; box-shadow: none !important; }
-.pdf-mode .pred-sub, .pdf-mode .t-sub { color: #334155 !important; }
-.pdf-mode .nav, .pdf-mode .refresh-btn { display: none !important; }
+    /* PDF SPECIFIKUS */
+    .pdf-mode { background: white !important; color: black !important; padding: 40px !important; }
+    .pdf-mode .prediction-card, .pdf-mode .stat-box, .pdf-mode .total-hero, .pdf-mode .history-card, .pdf-mode .input-card { 
+        background: white !important; border: 1px solid #ccc !important; box-shadow: none !important; color: black !important; margin-bottom: 20px !important; 
+    }
+    .pdf-mode .pred-text { color: #333 !important; }
+    .pdf-mode .total-val { color: #1e3a8a !important; }
+    .pdf-mode .nav, .pdf-mode .refresh-btn { display: none !important; }
 </style>
 </head>
 <body>
 
 <div class="refresh-btn" onclick="location.reload()">↻</div>
 
-<div id="p-dash" class="page active">
+<div id="page-dashboard" class="page active">
     <div class="header">
-        <h1>PROGNÓZIS</h1>
-        <div style="font-size:0.8rem; color:var(--dim); font-weight:800;" id="headerDate">--</div>
+        <h1>RÉSZLETES JELENTÉS</h1>
+        <div class="subtitle" id="currentDateDisplay">Betöltés...</div>
     </div>
 
-    <div class="prediction-box">
-        <div class="pred-header">
-            <span class="pred-title">ÉVES KERET BECSLÉS (AUG 31)</span>
-            <span id="pred-badge" class="status-badge s-good">--</span>
-        </div>
-        <div id="pred-content">
-            <div class="pred-sub">Jelenlegi állás szerint az éves keretből (8700 kWh) elfogyott: <b style="color:white" id="d-used">0 kWh</b>.</div>
-            <div class="pred-sub" style="margin-top:10px;">
-                A mai napig időarányosan <b id="d-pro-cons" style="color:white">-- kWh</b> fogyasztás lenne az ideális.
-            </div>
-            <div style="margin-top:15px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.2);">
-                <div style="font-size:0.7rem; text-transform:uppercase; font-weight:800; color:var(--accent);">Augusztusi Várható Egyenleg:</div>
-                <div class="pred-main-val" id="d-balance">0 Ft</div>
-                <div class="pred-sub" id="d-advice">...</div>
-            </div>
+    <div class="prediction-card">
+        <div class="pred-header">ÉVES ENERGIA PROGNÓZIS</div>
+        <div class="pred-text" id="aiAnalysisText">
+            Kérlek, add meg az aktuális óraállást az <b style="color:var(--accent)">ADATOK</b> menüpontban a pontos számításhoz!
         </div>
     </div>
 
-    <div class="card total-hero">
-        <div style="font-size:0.75rem; font-weight:800; color:var(--dim); text-transform:uppercase;">Aktuális Havi Fizetendő (Anyu)</div>
-        <div class="total-val" id="d-grandTotal">0 Ft</div>
-        <div style="font-size:0.7rem; color:var(--dim); margin-top:5px;">(Fixek 100% + Villany Átalány 50%)</div>
+    <div class="stat-grid">
+        <div class="stat-box">
+            <span class="stat-label">Éves Keret (Augusztusig)</span>
+            <span class="stat-value">8 700 kWh</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Eddigi fogyasztás</span>
+            <span class="stat-value" id="disp-total-cons">0 kWh</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Hátralévő keret</span>
+            <span class="stat-value" id="disp-rem-quota">0 kWh</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Átlagos napi fogyasztás</span>
+            <span class="stat-value" id="disp-daily-avg">0 kWh</span>
+        </div>
     </div>
 
-    <div class="card">
-        <div class="card-title">📜 ELŐZMÉNYEK (SZEPTEMBERTŐL)</div>
+    <div class="total-hero">
+        <div class="stat-label">UTALANDÓ VÉGÖSSZEG (ANYU)</div>
+        <div class="total-val" id="disp-grand-total">0 Ft</div>
+        <div class="total-sub">(Fix költségek 100% + Villany Átalány 50%)</div>
+    </div>
+
+    <div class="history-card">
         <table>
-            <thead><tr><th>Dátum</th><th>Fogyasztás</th><th style="text-align:right">Költség</th></tr></thead>
-            <tbody id="histBody"></tbody>
+            <thead>
+                <tr>
+                    <th>Időszak</th>
+                    <th>Fogyasztás</th>
+                    <th style="text-align:right">Költség</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
         </table>
     </div>
 </div>
 
-<div id="p-input" class="page">
-    <div class="header"><h1>ADATOK</h1></div>
+<div id="page-input" class="page">
+    <div class="header">
+        <h1>ADATOK FRISSÍTÉSE</h1>
+        <div class="subtitle">ÓRAÁLLÁS ÉS KÖLTSÉGEK</div>
+    </div>
 
-    <div class="card">
-        <div class="card-title">MVM LEOLVASÁS</div>
-        <div style="margin-bottom:15px;">
-            <label class="in-label">UTOLSÓ RÖGZÍTETT ÁLLÁS</label>
-            <input type="number" id="in-prev" class="styled-in" value="17232" readonly style="background:rgba(255,255,255,0.05); color:var(--dim);">
+    <div class="input-card">
+        <div style="margin-bottom:20px;">
+            <label class="input-label">UTOLSÓ RÖGZÍTETT ÁLLÁS</label>
+            <input type="number" id="in-prev" class="styled-input" value="17232" readonly style="background:rgba(255,255,255,0.05); color:var(--dim);">
         </div>
         <div>
-            <label class="in-label" style="color:var(--primary);">ÚJ ÓRAÁLLÁS (MA)</label>
-            <input type="number" id="in-curr" class="styled-in" placeholder="Pl. 17500" oninput="update()">
+            <label class="input-label" style="color:var(--primary);">JELENLEGI ÓRAÁLLÁS (MA)</label>
+            <input type="number" id="in-curr" class="styled-input" placeholder="Pl. 17800" oninput="updateCalculations()">
         </div>
-        <div id="live-calc-info" style="font-size:0.8rem; color:var(--accent); margin-bottom:10px; font-weight:700;"></div>
-        <button onclick="save()" style="width:100%; padding:16px; border-radius:12px; background:var(--primary); color:white; font-weight:900; border:none; cursor:pointer;">💾 MENTÉS ÉS LEZÁRÁS</button>
+        <div id="live-consumption" style="margin-top:10px; font-weight:700; color:var(--accent); font-size:0.9rem;"></div>
+        
+        <button onclick="saveData()" style="width:100%; padding:18px; border-radius:12px; background:var(--primary); color:white; font-weight:900; border:none; margin-top:20px; font-size:1rem; cursor:pointer;">💾 HÓNAP MENTÉSE</button>
     </div>
 
-    <div class="card">
-        <div class="card-title">FIX KÖLTSÉGEK (100%)</div>
-        <div id="fix-list"></div>
+    <div class="input-card">
+        <div style="font-size:0.8rem; font-weight:800; color:var(--dim); margin-bottom:15px; text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:10px;">
+            FIX KÖLTSÉGEK SZERKESZTÉSE
+        </div>
+        <div id="fix-inputs-container"></div>
     </div>
 
-    <button onclick="genPDF()" style="width:100%; padding:15px; border-radius:50px; background:white; color:black; font-weight:900; border:none; margin-top:10px;">📤 PDF GENERÁLÁSA</button>
+    <button onclick="generatePDF()" style="width:100%; padding:18px; border-radius:50px; background:white; color:black; font-weight:900; border:none; margin-bottom:30px; box-shadow:0 10px 20px rgba(0,0,0,0.3);">📤 PDF DOKUMENTUM</button>
 </div>
 
 <nav class="nav">
-    <div class="nav-item active" id="t-dash" onclick="tab('dash')">📊<br>ANALÍZIS</div>
-    <div class="nav-item" id="t-input" onclick="tab('input')">✏️<br>ADATOK</div>
+    <div class="nav-btn active" id="nav-dash" onclick="switchTab('dash')">
+        <span class="nav-icon">📊</span>
+        <span>KIMUTATÁS</span>
+    </div>
+    <div class="nav-btn" id="nav-input" onclick="switchTab('input')">
+        <span class="nav-icon">✏️</span>
+        <span>ADATOK</span>
+    </div>
 </nav>
 
 <script>
     // --- KONFIGURÁCIÓ (Fotók alapján) ---
-    const FIXES = [
+    const FIX_ITEMS = [
         { id: 'v_at', name: 'Villany Átalány', val: 55000 },
         { id: 'tv', name: 'TV Előfizetés', val: 7142 },
-        { id: 'tel', name: 'Telefon', val: 4500 },
+        { id: 'tel', name: 'Mobiltelefon', val: 4500 },
         { id: 'net', name: 'Internet', val: 2880 },
         { id: 'viz', name: 'Vízdíj', val: 2500 },
         { id: 'bizt', name: 'Biztosítás', val: 2386 },
         { id: 'szemet', name: 'Szemét díj', val: 667 },
-        { id: 'komm', name: 'Komm. Adó', val: 600 }
+        { id: 'komm', name: 'Kommunális adó', val: 600 }
     ];
-    
-    // Konstansok
-    const LIMIT_MO = 210; 
-    const LIMIT_YR = 8700; 
-    const PRICE_R = 36.386; 
-    const PRICE_P = 70.104;
-    
-    // UTOLSÓ FIX ÁLLÁS (Január vége) -> Ez a kiindulópont Februárra
-    const LAST_FIXED_READING = 17232; 
 
-    // ADATBÁZIS VISSZAFEJTÉSE (Matek alapjan, hogy stimmeljen a 17232)
-    // Január végződött: 17232. Fogyasztás: 861. -> Dec végződött: 16371.
-    // Dec fogy: 861 -> Nov végződött: 15510.
-    // Nov fogy: 557 -> Okt végződött: 14953.
-    // Okt fogy: 231 -> Szept végződött: 14722.
-    // Szept fogy: 351 -> Szept kezdet: 14371.
-    // Tehát az MVM év (Szept 1) induló óraállása: 14371.
-    const START_OF_YEAR_METER = 14371; 
-    const START_OF_YEAR_DATE = new Date("2025-09-01");
+    const LIMITS = { monthly: 210, yearly: 8700 };
+    const PRICES = { rezsi: 36.386, piaci: 70.104 };
+    
+    // FIX KEZDŐPONT: 2025. Szeptember 1. - Óraállás: 14722 (Visszafejtve a listából)
+    // De a felhasználó kérése: UTOLSÓ ÁLLÁS 17232.
+    // Tehát az "Új" bevitel a 17232-höz képest számol.
+    const LAST_FIXED_METER = 17232;
+    const START_OF_YEAR_DATE = new Date('2025-09-01');
 
-    let db = JSON.parse(localStorage.getItem('secure_history_v1')) || [
-        { date: '2026. JANUÁR', read: 18372, cons: 1140, cost: 72782 }, // Ez a rossz adat, felülírjuk az alapértelmezettel ha nincs mentés
+    // HELYREÁLLÍTOTT ADATBÁZIS (Szeptembertől Januárig)
+    // Január vége: 17232. 
+    let historyDB = JSON.parse(localStorage.getItem('secure_history_v1')) || [
+        { date: '2026. Január', read: 17232, cons: 861, cost: 53294 },
+        { date: '2025. December', read: 16371, cons: 861, cost: 53284 },
+        { date: '2025. November', read: 15510, cons: 557, cost: 32002 },
+        { date: '2025. Október', read: 14953, cons: 231, cost: 9123 },
+        { date: '2025. Szeptember', read: 14722, cons: 351, cost: 17528 }
     ];
-    
-    // Ha a DB "rossz" (pl. az előző kód generálta), akkor felülírjuk a tisztával:
-    if(db.length > 0 && db[0].read !== 17232) {
-         db = [
-            { date: '2026. JANUÁR', read: 17232, cons: 861, cost: 53294 },
-            { date: '2025. DECEMBER', read: 16371, cons: 861, cost: 53284 },
-            { date: '2025. NOVEMBER', read: 15510, cons: 557, cost: 32002 },
-            { date: '2025. OKTÓBER', read: 14953, cons: 231, cost: 9123 },
-            { date: '2025. SZEPTEMBER', read: 14722, cons: 351, cost: 17528 }
-        ];
-        localStorage.setItem('secure_history_v1', JSON.stringify(db));
-    }
 
-    let sets = JSON.parse(localStorage.getItem('expense_settings')) || {};
+    let userSettings = JSON.parse(localStorage.getItem('expense_settings')) || {};
 
-    function tab(id) {
+    // --- NAVIGÁCIÓ ---
+    function switchTab(tabId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        document.getElementById('p-'+id).classList.add('active');
-        document.getElementById('t-'+id).classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('page-' + tabId).classList.add('active');
+        document.getElementById('nav-' + tabId).classList.add('active');
+        window.scrollTo(0,0);
     }
 
+    // --- INICIALIZÁLÁS ---
     function init() {
-        const d = new Date(); const m = ["JAN","FEB","MÁR","ÁPR","MÁJ","JÚN","JÚL","AUG","SZEP","OKT","NOV","DEC"];
-        document.getElementById('headerDate').innerText = `${d.getFullYear()}. ${m[d.getMonth()]}`;
+        const d = new Date();
+        const months = ["Január","Február","Március","Április","Május","Június","Július","Augusztus","Szeptember","Október","November","December"];
+        document.getElementById('currentDateDisplay').innerText = `${d.getFullYear()}. ${months[d.getMonth()]}`;
 
-        const list = document.getElementById('fix-list');
-        FIXES.forEach(f => {
-            const val = sets[f.id] !== undefined ? sets[f.id] : f.val;
-            list.innerHTML += `<div style="margin-bottom:10px;"><label class="in-label">${f.name}</label>
-                <input type="number" id="in_${f.id}" class="styled-in" value="${val}" oninput="update()" style="margin-bottom:0; padding:10px;"></div>`;
+        // Fix inputok generálása
+        const container = document.getElementById('fix-inputs-container');
+        FIX_ITEMS.forEach(item => {
+            const val = userSettings[item.id] !== undefined ? userSettings[item.id] : item.val;
+            container.innerHTML += `
+                <div style="margin-bottom:15px;">
+                    <label class="input-label">${item.name}</label>
+                    <input type="number" id="in_${item.id}" class="styled-input" value="${val}" oninput="updateCalculations()">
+                </div>
+            `;
         });
-        
-        // A legutolsó adatbázis bejegyzés a kiinduló
-        if(db.length > 0) {
-            document.getElementById('in-prev').value = db[0].read;
+
+        // Prev meter beállítása a DB legtetejéről
+        if(historyDB.length > 0) {
+            document.getElementById('in-prev').value = historyDB[0].read;
         } else {
-            document.getElementById('in-prev').value = LAST_FIXED_READING;
+            document.getElementById('in-prev').value = LAST_FIXED_METER;
         }
-        
-        update();
+
+        updateCalculations();
     }
 
-    function update() {
-        const prevRead = parseFloat(document.getElementById('in-prev').value);
-        const currRead = Math.round(parseFloat(document.getElementById('in-curr').value) || 0);
-        
+    // --- SZÁMÍTÁSOK ---
+    function updateCalculations() {
+        // 1. MVM Áram matek
+        const prevMeter = parseFloat(document.getElementById('in-prev').value);
+        const currMeter = Math.round(parseFloat(document.getElementById('in-curr').value) || 0);
         let liveCons = 0;
-        if(currRead > prevRead) {
-            liveCons = currRead - prevRead;
-            document.getElementById('live-calc-info').innerText = `Jelenlegi fogyasztás: ${liveCons} kWh`;
+
+        if(currMeter > prevMeter) {
+            liveCons = currMeter - prevMeter;
+            document.getElementById('live-consumption').innerText = `Fogyasztás: ${liveCons} kilowattóra`;
         } else {
-            document.getElementById('live-calc-info').innerText = "";
+            document.getElementById('live-consumption').innerText = "";
         }
 
-        // 1. FIX KÖLTSÉGEK SZÁMÍTÁSA
-        let fixSum = 0;
-        let villanyAtalany = 0;
-        FIXES.forEach(f => {
-            const val = parseFloat(document.getElementById('in_'+f.id).value) || 0;
-            if (f.id === 'v_at') villanyAtalany = val;
-            else fixSum += val;
-        });
-        const grandTotal = Math.round(villanyAtalany / 2) + fixSum;
-        document.getElementById('d-grandTotal').innerText = grandTotal.toLocaleString() + " Ft";
+        // 2. Fixek összesítése (Átalány felezve, többi 100%)
+        let totalFixCost = 0;
+        let atalanyVal = 0;
 
-        // 2. ÉVES PROGNÓZIS (REALTIME)
-        // Összes eddigi fogyasztás a DB-ből (Szeptembertől)
-        // Mivel a DB-t helyreállítottuk, csak simán összeadjuk a 'cons' értékeket
-        let pastCons = db.reduce((sum, item) => sum + item.cons, 0);
-        let totalUsed = pastCons + liveCons; // + amit most írt be
-        
+        FIX_ITEMS.forEach(item => {
+            const v = parseFloat(document.getElementById('in_' + item.id).value) || 0;
+            if(item.id === 'v_at') atalanyVal = v;
+            else totalFixCost += v;
+        });
+
+        const grandTotal = Math.round(atalanyVal / 2) + totalFixCost;
+        document.getElementById('disp-grand-total').innerText = grandTotal.toLocaleString() + " Ft";
+
+        // 3. Éves Prognózis (Szeptember 1-től)
+        let totalConsumedSoFar = historyDB.reduce((acc, curr) => acc + curr.cons, 0) + liveCons;
+        let remainingQuota = LIMITS.yearly - totalConsumedSoFar;
+
         // Napok száma Szept 1 óta
         const now = new Date();
-        const diffTime = Math.abs(now - START_OF_YEAR_DATE);
-        const daysPassed = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        
-        // Ideális fogyasztás máig (8700 / 365 * eltelt napok)
-        const idealCons = Math.round((LIMIT_YR / 365) * daysPassed);
-        const diff = totalUsed - idealCons; // Pozitív ha többet fogyasztottunk
-        
-        document.getElementById('d-used').innerText = totalUsed + " kWh";
-        document.getElementById('d-pro-cons').innerText = idealCons + " kWh";
-        
-        const badge = document.getElementById('pred-badge');
-        const balance = document.getElementById('d-balance');
-        const advice = document.getElementById('d-advice');
+        const timeDiff = Math.abs(now - START_OF_YEAR_DATE);
+        const daysPassed = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); 
+        const dailyAverage = totalConsumedSoFar / daysPassed;
 
-        if(diff > 0) {
-            // TÚLFOGYASZTÁS
-            const overPay = Math.round(diff * PRICE_P); // Durva becslés piaci árra
-            badge.innerText = "TÚLLÉPÉS!";
-            badge.className = "status-badge s-bad";
-            balance.innerText = `-${overPay.toLocaleString()} Ft`;
-            balance.style.color = "var(--danger)";
-            advice.innerText = `Jelenleg ${diff} kWh-val vagyunk az időarányos keret felett. Ha így folytatjuk, augusztusban ráfizetés várható.`;
+        // Becslés Augusztus 31-ig (365 napos ciklus)
+        const projectedTotal = dailyAverage * 365;
+        const diffProjected = LIMITS.yearly - projectedTotal;
+
+        // Megjelenítés
+        document.getElementById('disp-total-cons').innerText = totalConsumedSoFar.toLocaleString() + " kWh";
+        document.getElementById('disp-rem-quota').innerText = remainingQuota.toLocaleString() + " kWh";
+        document.getElementById('disp-daily-avg').innerText = dailyAverage.toFixed(1) + " kWh";
+
+        // 4. Szöveges Elemzés Generálása
+        let analysisHTML = "";
+        if (currMeter > prevMeter) {
+            analysisHTML = `
+                A rögzített <span class="highlight">${currMeter}</span> óraállás alapján ebben a hónapban <span class="highlight">${liveCons} kilowattóra</span> áramot fogyasztottál.<br><br>
+                Szeptember 1. óta összesen <span class="highlight">${totalConsumedSoFar} kWh</span> fogyott. 
+                Jelenleg a napi átlagfogyasztás <span class="highlight">${dailyAverage.toFixed(1)} kWh</span>.
+                <br><br>
+            `;
+            
+            if (diffProjected >= 0) {
+                analysisHTML += `
+                    <span class="status-good">KIVÁLÓ HÍR!</span><br>
+                    Ha ebben a tempóban folytatod, az év végére (augusztus 31.) várhatóan <span class="highlight">${Math.round(diffProjected)} kWh</span> megtakarításod marad a 8700-as keretből. 
+                    Ez azt jelenti, hogy <b>nem lesz ráfizetésed</b>, sőt, biztonságos tartalékkal zárod az évet.
+                `;
+            } else {
+                analysisHTML += `
+                    <span class="status-bad">FIGYELEM!</span><br>
+                    A jelenlegi fogyasztási szokásokkal augusztusra várhatóan <span class="highlight">${Math.round(Math.abs(diffProjected))} kWh</span> túllépésed lesz a kerethez képest. 
+                    Javasolt a fogyasztás csökkentése a ráfizetés elkerülése érdekében.
+                `;
+            }
         } else {
-            // SPÓROLÁS
-            const saved = Math.round(Math.abs(diff) * PRICE_R);
-            badge.innerText = "BIZTONSÁGOS";
-            badge.className = "status-badge s-good";
-            balance.innerText = `+${saved.toLocaleString()} Ft`;
-            balance.style.color = "var(--success)";
-            advice.innerText = `Jelenleg ${Math.abs(diff)} kWh tartalékunk van az időarányos kerethez képest. Ez jó irány!`;
+            analysisHTML = "Kérlek, írd be a friss óraállást az Adatok fülön, hogy lássuk a pontos előrejelzést!";
         }
+        document.getElementById('aiAnalysisText').innerHTML = analysisHTML;
 
-        // TÁBLÁZAT RENDER
-        const tb = document.getElementById('histBody');
-        tb.innerHTML = '';
+        // 5. Táblázat Frissítése
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '';
         
-        // Ha van beírt adat, azt is mutatjuk "Jelenlegi" néven
-        if(currRead > prevRead) {
-             // Kiszámoljuk a "Jelenlegi" árát csak megjelenítésre (nem adjuk hozzá a végösszeghez, mert átalány van)
-             const rP = Math.min(liveCons, LIMIT_MO);
-             const pP = Math.max(0, liveCons - LIMIT_MO);
-             const estCost = Math.round(rP * PRICE_R + pP * PRICE_P);
-             
-             tb.innerHTML += `
-             <tr style="background:rgba(59,130,246,0.1); border-left:3px solid var(--primary)">
-                <td><span class="t-date">JELENLEGI</span><span class="t-sub">${currRead} (Mérve)</span></td>
-                <td>${liveCons} kWh</td>
-                <td class="t-cost">${estCost.toLocaleString()} Ft<br><span style="font-size:0.6rem; color:var(--dim)">(Becsült)</span></td>
-             </tr>`;
+        // Ha van élő adat, azt tesszük legfelülre (de nem mentjük még)
+        if (liveCons > 0) {
+            const r = Math.min(liveCons, LIMITS.monthly);
+            const p = Math.max(0, liveCons - LIMITS.monthly);
+            const estCost = Math.round(r * PRICES.rezsi + p * PRICES.piaci);
+            tbody.innerHTML += `
+                <tr style="background:rgba(59,130,246,0.1); border-left:4px solid #3b82f6;">
+                    <td><b style="color:white">JELENLEGI</b><br><span style="font-size:0.7rem">Nem mentett</span></td>
+                    <td>${liveCons} kWh</td>
+                    <td class="cost-col">${estCost.toLocaleString()} Ft*</td>
+                </tr>
+            `;
         }
 
-        db.forEach(row => {
-            tb.innerHTML += `<tr>
-                <td><span class="t-date">${row.date}</span><span class="t-sub">${row.read}</span></td>
-                <td>${row.cons} kWh</td>
-                <td class="t-cost">${row.cost.toLocaleString()} Ft</td>
-            </tr>`;
+        historyDB.forEach(row => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${row.date}</b><br><span style="font-size:0.7rem">Óra: ${row.read}</span></td>
+                    <td>${row.cons} kWh</td>
+                    <td class="cost-col">${row.cost.toLocaleString()} Ft</td>
+                </tr>
+            `;
         });
 
-        // Mentés
+        // Mentés LocalStorage-ba
         let s = {};
-        FIXES.forEach(f => s[f.id] = parseFloat(document.getElementById('in_'+f.id).value));
+        FIX_ITEMS.forEach(i => s[i.id] = parseFloat(document.getElementById('in_'+i.id).value));
         localStorage.setItem('expense_settings', JSON.stringify(s));
     }
 
-    function save() {
+    // --- ADATMENTÉS ---
+    function saveData() {
         const curr = Math.round(parseFloat(document.getElementById('in-curr').value));
         const prev = parseFloat(document.getElementById('in-prev').value);
-        if(!curr || curr <= prev) return alert("Hiba: Kisebb az állás mint az előző!");
-        
+
+        if (!curr || curr <= prev) return alert("Hiba: Az új óraállásnak nagyobbnak kell lennie az előzőnél!");
+
         const cons = curr - prev;
-        const cost = Math.round(Math.min(cons, LIMIT_MO) * PRICE_R) + Math.round(Math.max(0, cons - LIMIT_MO) * PRICE_P);
+        const r = Math.min(cons, LIMITS.monthly);
+        const p = Math.max(0, cons - LIMITS.monthly);
+        const cost = Math.round(r * PRICES.rezsi + p * PRICES.piaci);
+
+        const d = new Date();
+        const months = ["Január","Február","Március","Április","Május","Június","Július","Augusztus","Szeptember","Október","November","December"];
+        const dateStr = `${d.getFullYear()}. ${months[d.getMonth()]}`;
+
+        historyDB.unshift({ date: dateStr, read: curr, cons: cons, cost: cost });
+        localStorage.setItem('secure_history_v1', JSON.stringify(historyDB));
         
-        const d = new Date(); 
-        const m = ["JAN","FEB","MÁR","ÁPR","MÁJ","JÚN","JÚL","AUG","SZEP","OKT","NOV","DEC"];
-        const dateStr = `${d.getFullYear()}. ${m[d.getMonth()]}`;
-        
-        db.unshift({ date: dateStr, read: curr, cons: cons, cost: cost });
-        localStorage.setItem('secure_history_v1', JSON.stringify(db));
-        location.reload();
+        // Mezők törlése és frissítés
+        document.getElementById('in-curr').value = "";
+        document.getElementById('in-prev').value = curr;
+        updateCalculations();
+        switchTab('dash');
+        alert("Sikeres mentés!");
     }
 
-    function genPDF() {
-        const el = document.getElementById('p-dash');
+    // --- PDF GENERÁLÁS ---
+    function generatePDF() {
+        const el = document.getElementById('page-dashboard');
         document.body.classList.add('pdf-mode');
-        const opt = { margin: 0, filename: 'Prognozis_Kimutatas.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        html2pdf().set(opt).from(el).save().then(() => document.body.classList.remove('pdf-mode'));
+        
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: 'Prognózis_Jelentés.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(el).save().then(() => {
+            document.body.classList.remove('pdf-mode');
+        });
     }
 
     init();
