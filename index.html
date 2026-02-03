@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tiszta Éves Rezsi 2025-26</title>
+<title>Éves Rezsi Tervező - Tiszta v16</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -13,108 +13,125 @@
         --success: #10b981; --danger: #ef4444;
     }
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 100px; }
+    body { background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 100px; }
 
     /* HEADER */
-    .header-box { text-align: center; margin-bottom: 25px; }
-    h1 { margin: 0; font-size: 1.5rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 1px; }
-    .subtitle { color: var(--dim); font-size: 0.8rem; }
+    .header-box { text-align: center; margin-bottom: 20px; padding: 15px 0; }
+    h1 { margin: 0; font-size: 1.4rem; font-weight: 900; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 1px; }
+    .subtitle { color: var(--dim); font-size: 0.8rem; font-weight: 700; margin-top: 5px; }
 
     /* DASHBOARD (STICKY) */
     .dashboard-sticky {
         position: sticky; top: 10px; z-index: 100;
-        background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px);
+        background: rgba(30, 41, 59, 0.98); backdrop-filter: blur(10px);
         border: 1px solid var(--primary); border-radius: 16px; padding: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 25px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6); margin-bottom: 25px;
     }
-    .db-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px; }
-    .db-val { font-size: 1.4rem; font-weight: 900; color: white; }
-    .db-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; font-weight: 800; }
+    .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .db-item span { display: block; }
+    .db-label { font-size: 0.65rem; color: var(--dim); font-weight: 800; text-transform: uppercase; }
+    .db-val { font-size: 1.2rem; font-weight: 900; color: white; }
     
-    .progress-track { height: 10px; background: #0f172a; border-radius: 5px; overflow: hidden; position: relative; margin-top: 8px; border: 1px solid var(--border); }
+    .progress-track { height: 10px; background: #0f172a; border-radius: 5px; overflow: hidden; position: relative; border: 1px solid var(--border); }
     .progress-fill { height: 100%; transition: width 0.5s ease; }
-    .marker { position: absolute; top: 0; bottom: 0; width: 2px; background: white; z-index: 2; box-shadow: 0 0 5px white; }
+    .time-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: white; z-index: 5; box-shadow: 0 0 8px white; }
 
-    /* HÓNAP KÁRTYA */
+    /* FIX GOMB */
+    .fix-btn { width: 100%; background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; color: var(--dim); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 20px; display: flex; justify-content: space-between; cursor: pointer; }
+
+    /* HÓNAP KÁRTYÁK - LÁNCOLT NÉZET */
     .month-list { display: flex; flex-direction: column; gap: 15px; }
     .month-card { 
-        background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; 
-        transition: 0.3s; position: relative;
+        background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 0; 
+        transition: 0.3s; position: relative; overflow: hidden;
     }
-    .month-card.active { border: 2px solid var(--primary); background: #263345; }
+    .month-card.active { border: 2px solid var(--primary); box-shadow: 0 0 20px rgba(59,130,246,0.15); }
     
-    .mc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .mc-title { font-weight: 800; font-size: 0.9rem; color: white; text-transform: uppercase; }
+    .mc-header { background: rgba(0,0,0,0.2); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .mc-title { font-weight: 800; font-size: 0.85rem; color: white; }
+    .mc-status { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--dim); }
+    .st-ok { color: var(--success); } .st-bad { color: var(--danger); }
+
+    .mc-body { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: center; }
     
-    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: center; }
-    
+    .reading-wrap label { font-size: 0.6rem; color: var(--dim); font-weight: 800; display: block; margin-bottom: 4px; }
     .reading-input { 
         width: 100%; background: #0f172a; border: 1px solid var(--border); color: white; 
-        padding: 12px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; text-align: center; outline: none;
+        padding: 10px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; text-align: center; outline: none;
     }
     .reading-input:focus { border-color: var(--accent); }
-    
-    .data-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 5px; color: var(--dim); }
-    .data-val { font-weight: 700; color: white; }
-    .total-display { font-size: 1.2rem; font-weight: 900; color: var(--primary); text-align: right; margin-top: 5px; }
 
-    /* FIX KÖLTSÉG GOMB */
-    .fix-btn { width: 100%; background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; color: var(--dim); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; margin-bottom: 20px; display: flex; justify-content: space-between; cursor: pointer; }
+    .result-wrap { text-align: right; }
+    .res-cost { font-size: 1.3rem; font-weight: 900; color: white; }
+    .res-cons { font-size: 0.75rem; color: var(--accent); font-weight: 700; margin-top: 3px; }
+    .res-info { font-size: 0.65rem; color: var(--dim); margin-top: 2px; }
+
+    .mc-footer { background: rgba(0,0,0,0.1); padding: 8px 15px; font-size: 0.7rem; color: var(--dim); border-top: 1px solid var(--border); display: flex; justify-content: space-between; }
 
     /* FAB */
-    .fab { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5); cursor: pointer; z-index: 999; }
+    .fab { position: fixed; bottom: 25px; right: 25px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5); cursor: pointer; z-index: 999; }
 
     /* PDF MODE */
     .pdf-mode { background: white !important; color: black !important; padding: 20px !important; }
     .pdf-mode .dashboard-sticky, .pdf-mode .month-card, .pdf-mode .fix-btn { background: white !important; border: 1px solid #ccc !important; color: black !important; box-shadow: none !important; page-break-inside: avoid; }
-    .pdf-mode input { color: black !important; background: transparent !important; border: none !important; font-weight: 900 !important; text-align: left !important; }
+    .pdf-mode input { border: none !important; background: transparent !important; color: black !important; font-weight: 900 !important; text-align: left !important; padding: 0 !important; }
     .pdf-mode .fab { display: none !important; }
+    .pdf-mode .res-cost { color: #1e3a8a !important; }
 </style>
 </head>
 <body>
 
 <div class="header-box">
     <h1>REZSI TERVEZŐ 2025/26</h1>
-    <div class="subtitle">TELJES KÖLTSÉGEK (NINCS FELEZÉS)</div>
+    <div class="subtitle">TELJES KÖLTSÉGEK (100% ÁR)</div>
 </div>
 
 <div class="dashboard-sticky">
-    <div class="db-row">
-        <div>
-            <div class="db-label">Éves Keret (8700 kWh)</div>
-            <div class="db-val" id="d-cons">0 kWh</div>
+    <div class="db-grid">
+        <div class="db-item">
+            <span class="db-label">Fogyasztás (Szept-től)</span>
+            <span class="db-val" id="d-cons">0 kWh</span>
         </div>
-        <div style="text-align:right">
-            <div class="db-label">Hátralévő</div>
-            <div class="db-val" id="d-rem" style="color:var(--success)">0 kWh</div>
+        <div class="db-item" style="text-align:right;">
+            <span class="db-label">Éves Keret (8700)</span>
+            <span class="db-val" id="d-rem" style="color:var(--success)">0 kWh</span>
         </div>
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:var(--dim); margin-bottom:4px;">
+        <span id="d-text">Időarányos állapot:</span>
+        <span id="d-status">Számítás...</span>
     </div>
     <div class="progress-track">
         <div class="progress-fill" id="prog-bar" style="width:0%; background:var(--success)"></div>
-        <div class="marker" id="time-marker" style="left:0%"></div>
+        <div class="time-marker" id="time-marker" style="left:0%"></div> 
     </div>
-    <div style="text-align:center; font-size:0.7rem; color:var(--dim); margin-top:5px;" id="d-status">...</div>
 </div>
 
 <div class="fix-btn" onclick="toggleFix()">
-    <span>🛠️ Havi Fix Költségek (Szerkesztés)</span>
-    <span style="color:white"><span id="fix-total">0</span> Ft</span>
+    <span>🛠️ Fix Költségek (Szerkesztés)</span>
+    <span style="color:white"><span id="fix-total">0</span> Ft/hó</span>
 </div>
 <div id="fix-panel" style="display:none; background:var(--card); padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid var(--border);">
-    </div>
+    <div style="font-size:0.7rem; color:var(--accent); margin-bottom:10px; font-weight:bold;">EZEK AZ ÉRTÉKEK HOZZÁADÓDNAK MINDEN HÓNAPHOZ (100%)</div>
+    <div id="fix-list-container"></div>
+</div>
 
 <div class="month-list" id="month-list"></div>
 
-<div class="fab" onclick="genPDF()" title="PDF Mentés">📥</div>
+<div class="fab" onclick="genPDF()" title="Mentés PDF-be">💾</div>
 
 <script>
     // --- KONFIGURÁCIÓ ---
-    // Kezdőpont: 2025. Szeptember 1.
-    // Visszafejtve a 17232-es Januári záróból: 14371
-    const START_METER = 14371; 
+    // A TE ADATAID ALAPJÁN (Kerekítve, mert a számlázás egész számokkal megy)
+    // Augusztus végi záró (Szept nyitó): 17232
+    // Szeptemberi záró (Okt nyitó): 17583
+    const START_METER = 17232; 
+    
     const LIMITS = { mo: 210, yr: 8700 };
-    const PRICES = { r: 36.386, p: 70.104 }; // Pontos MVM árak
+    const PRICES = { r: 36.386, p: 70.104 }; 
 
+    // Hónapok (Szeptembertől Szeptemberig)
     const MONTHS = [
         { id: '2025-09', name: '2025. SZEPTEMBER' },
         { id: '2025-10', name: '2025. OKTÓBER' },
@@ -127,12 +144,11 @@
         { id: '2026-05', name: '2026. MÁJUS' },
         { id: '2026-06', name: '2026. JÚNIUS' },
         { id: '2026-07', name: '2026. JÚLIUS' },
-        { id: '2026-08', name: '2026. AUGUSZTUS' },
-        { id: '2026-09', name: '2026. SZEPTEMBER' }
+        { id: '2026-08', name: '2026. AUGUSZTUS' }
     ];
 
-    // FIX KÖLTSÉGEK (100% ÁR)
     const DEFAULT_FIXES = [
+        { id: 'v_at', name: 'Villany Átalány', val: 55000 },
         { id: 'tv', name: 'TV', val: 7142 },
         { id: 'tel', name: 'Telefon', val: 4500 },
         { id: 'net', name: 'Internet', val: 2880 },
@@ -140,21 +156,18 @@
         { id: 'bizt', name: 'Biztosítás', val: 2386 },
         { id: 'szemet', name: 'Szemét', val: 667 },
         { id: 'komm', name: 'Adó', val: 600 }
-        // Villany átalányt nem teszünk ide, mert az MVM-et számoljuk pontosan
     ];
 
-    // ADATOK
-    let readings = JSON.parse(localStorage.getItem('pure_readings')) || {
-        '2025-09': 14722, // 351 kWh
-        '2025-10': 14953, // 231 kWh
-        '2025-11': 15510, // 557 kWh
-        '2025-12': 16371, // 861 kWh
-        '2026-01': 17232  // 861 kWh (A fotón ez a mentett!)
+    // ADATOK BETÖLTÉSE
+    // Itt a "readings" a ZÁRÓ óraállást tárolja.
+    // Szeptembert már beírtam neked a kérésed szerint (17583)
+    let readings = JSON.parse(localStorage.getItem('pure_v16_readings')) || {
+        '2025-09': 17583 // Ez a Szept záró (fogyasztás: 351)
     };
     
-    let fixValues = JSON.parse(localStorage.getItem('pure_fixes')) || {};
+    let fixValues = JSON.parse(localStorage.getItem('pure_v16_fixes')) || {};
 
-    // --- RENDER ---
+    // --- INIT ---
     function init() {
         renderFixes();
         renderList();
@@ -162,12 +175,12 @@
     }
 
     function renderFixes() {
-        const p = document.getElementById('fix-panel');
-        p.innerHTML = '';
+        const c = document.getElementById('fix-list-container');
+        c.innerHTML = '';
         DEFAULT_FIXES.forEach(f => {
             const val = fixValues[f.id] !== undefined ? fixValues[f.id] : f.val;
-            p.innerHTML += `
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+            c.innerHTML += `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
                 <span style="font-size:0.8rem; color:#cbd5e1;">${f.name}</span>
                 <input type="number" value="${val}" onchange="saveFix('${f.id}', this.value)" 
                 style="background:#0f172a; border:1px solid #334155; color:white; width:90px; padding:8px; border-radius:8px; font-weight:bold; text-align:right;">
@@ -186,42 +199,51 @@
             
             c.innerHTML += `
             <div class="month-card ${activeClass}" id="card-${m.id}">
-                <div class="mc-top">
+                <div class="mc-header">
                     <span class="mc-title">${m.name}</span>
-                    <span style="font-size:0.7rem; color:var(--dim);">Nyitó: <span id="start-${m.id}">...</span></span>
+                    <span class="mc-status" id="st-${m.id}">--</span>
                 </div>
-                <div class="input-grid">
-                    <div>
-                        <input type="number" class="reading-input" placeholder="Záró állás" 
-                            value="${val}" oninput="saveReading('${m.id}', this.value)">
+                
+                <div class="mc-body">
+                    <div class="reading-wrap">
+                        <label>ZÁRÓ ÓRAÁLLÁS</label>
+                        <input type="number" class="reading-input" 
+                            placeholder="..." 
+                            value="${val}" 
+                            oninput="saveReading('${m.id}', this.value)">
                     </div>
-                    <div style="text-align:right;">
-                        <div class="total-display" id="cost-${m.id}">0 Ft</div>
-                        <div style="font-size:0.7rem; color:var(--dim);">Fogyasztás: <span id="cons-${m.id}" style="color:white; font-weight:700;">0</span> kWh</div>
+                    <div class="result-wrap">
+                        <div class="res-cost" id="cost-${m.id}">0 Ft</div>
+                        <div class="res-cons" id="cons-${m.id}">0 kWh</div>
+                        <div class="res-info" id="info-${m.id}">--</div>
                     </div>
                 </div>
-                <div id="info-${m.id}" style="font-size:0.7rem; margin-top:8px; padding-top:5px; border-top:1px dashed #334155; color:#94a3b8;"></div>
+                
+                <div class="mc-footer">
+                    <span>Nyitó: <b id="start-${m.id}" style="color:white">...</b></span>
+                    <span id="detail-${m.id}">...</span>
+                </div>
             </div>`;
         });
         
-        // Scroll
+        // Görgessünk az aktuális hónaphoz
         setTimeout(() => {
             const act = document.querySelector('.month-card.active');
             if(act) act.scrollIntoView({behavior:"smooth", block:"center"});
-        }, 300);
+        }, 500);
     }
 
-    // --- LOGIKA ---
+    // --- FŐ SZÁMOLÓ LOGIKA ---
     function calcAll() {
-        // Fixek összegzése (100%)
+        // 1. Fixek összeadása (100%)
         let fixSum = 0;
         DEFAULT_FIXES.forEach(f => {
             fixSum += (fixValues[f.id] !== undefined ? fixValues[f.id] : f.val);
         });
         document.getElementById('fix-total').innerText = fixSum.toLocaleString();
 
-        // Hónapok láncolása
-        let prev = START_METER;
+        // 2. Hónapok láncolása
+        let prev = START_METER; // Ez a 17232
         let yearlyTotal = 0;
 
         MONTHS.forEach(m => {
@@ -231,34 +253,43 @@
             const costEl = document.getElementById(`cost-${m.id}`);
             const consEl = document.getElementById(`cons-${m.id}`);
             const infoEl = document.getElementById(`info-${m.id}`);
+            const stEl = document.getElementById(`st-${m.id}`);
+            const detEl = document.getElementById(`detail-${m.id}`);
 
             if(curr && curr > prev) {
                 const cons = curr - prev;
                 yearlyTotal += cons;
 
-                // Tiszta MVM számítás
+                // Tiszta MVM számítás (NINCS FELEZÉS)
                 const r = Math.min(cons, LIMITS.mo);
                 const p = Math.max(0, cons - LIMITS.mo);
                 const mvmCost = Math.round((r * PRICES.r) + (p * PRICES.p));
                 
-                // VÉGLEGES TISZTA FIZETENDŐ: MVM(100%) + FIX(100%)
+                // Végösszeg = MVM (Teljes) + Fixek (Teljes)
                 const finalTotal = mvmCost + fixSum;
 
-                consEl.innerText = cons;
-                costEl.innerText = finalTotal.toLocaleString() + " Ft";
+                consEl.innerText = `${cons} kWh`;
+                costEl.innerText = `${finalTotal.toLocaleString()} Ft`;
+                infoEl.innerHTML = `MVM Áram: ${mvmCost.toLocaleString()} Ft`;
+                detEl.innerHTML = `Fixek: ${fixSum.toLocaleString()} Ft`;
+
+                if(p > 0) {
+                    stEl.innerText = "TÚLLÉPÉS";
+                    stEl.className = "mc-status st-bad";
+                    infoEl.innerHTML += ` <span style="color:var(--danger)">(${p} kWh piaci)</span>`;
+                } else {
+                    stEl.innerText = "REZSIÁRAS";
+                    stEl.className = "mc-status st-ok";
+                }
                 
-                let infoText = `MVM: ${mvmCost.toLocaleString()} Ft + Fix: ${fixSum.toLocaleString()} Ft.`;
-                if(p > 0) infoText += ` <span style="color:var(--danger)">⚠️ ${p} kWh piaci áras!</span>`;
-                else infoText += ` <span style="color:var(--success)">✔️ Kereten belül.</span>`;
-                
-                infoEl.innerHTML = infoText;
-                
-                prev = curr; // Láncoljuk a következőhöz
+                prev = curr; // Ez lesz a következő hónap nyitója
             } else {
-                consEl.innerText = "-";
                 costEl.innerText = "-";
-                infoEl.innerHTML = "Adatbevitelre vár...";
-                if(curr) prev = curr; // Ha kisebb az adat, akkor is ez legyen a kövi alapja
+                consEl.innerText = "-";
+                infoEl.innerText = "";
+                detEl.innerText = "";
+                stEl.innerText = "";
+                if(curr) prev = curr; // Ha kisebb az adat (hiba/csere), akkor is vigye tovább
             }
         });
 
@@ -271,12 +302,13 @@
         
         document.getElementById('d-cons').innerText = total + " kWh";
         document.getElementById('d-rem').innerText = rem + " kWh";
-        document.getElementById('prog-bar').style.width = pct + "%";
+        document.getElementById('prog-bar').style.width = Math.min(pct, 100) + "%";
         
-        // Idővonal
+        // Idővonal (Fehér vonal)
         const start = new Date('2025-09-01');
         const end = new Date('2026-08-31');
         const now = new Date();
+        
         const totalTime = end - start;
         const passed = now - start;
         let timePct = (passed / totalTime) * 100;
@@ -284,15 +316,15 @@
         
         document.getElementById('time-marker').style.left = timePct + "%";
         
-        const statusEl = document.getElementById('d-status');
+        const stText = document.getElementById('d-status');
         const bar = document.getElementById('prog-bar');
         
         if(pct > timePct) {
             bar.style.background = "var(--danger)";
-            statusEl.innerHTML = "<span style='color:var(--danger)'>TÚLFOGYASZTÁS!</span> A csík megelőzte az időt.";
+            stText.innerHTML = "<span style='color:var(--danger)'>TÚLFOGYASZTÁS!</span> (A csík megelőzte a mai napot)";
         } else {
             bar.style.background = "var(--success)";
-            statusEl.innerHTML = "<span style='color:var(--success)'>RENDBEN.</span> Van tartalékod.";
+            stText.innerHTML = "<span style='color:var(--success)'>RENDBEN.</span> (Van tartalékod)";
         }
     }
 
@@ -300,13 +332,13 @@
     function saveReading(id, val) {
         if(val) readings[id] = parseFloat(val);
         else delete readings[id];
-        localStorage.setItem('pure_readings', JSON.stringify(readings));
+        localStorage.setItem('pure_v16_readings', JSON.stringify(readings));
         calcAll();
     }
 
     function saveFix(id, val) {
         fixValues[id] = parseFloat(val);
-        localStorage.setItem('pure_fixes', JSON.stringify(fixValues));
+        localStorage.setItem('pure_v16_fixes', JSON.stringify(fixValues));
         calcAll();
     }
 
@@ -322,7 +354,7 @@
 
     function genPDF() {
         document.body.classList.add('pdf-mode');
-        const opt = { margin: 5, filename: 'Tiszta_Rezsi.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        const opt = { margin: 5, filename: 'Eves_Rezsi_Tiszta.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
         html2pdf().set(opt).from(document.body).save().then(() => document.body.classList.remove('pdf-mode'));
     }
 
