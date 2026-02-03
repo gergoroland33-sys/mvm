@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tiszta Áram Kalkulátor</title>
+<title>MVM Precíziós Kalkulátor</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -15,291 +15,263 @@
     * { box-sizing: border-box; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 100px; }
 
-    h1 { text-align: center; margin: 15px 0; font-size: 1.4rem; color: white; text-transform: uppercase; }
+    /* HEADER */
+    .header-box { text-align: center; margin-bottom: 25px; }
+    h1 { margin: 0; font-size: 1.5rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 1px; }
+    .subtitle { color: var(--accent); font-size: 0.8rem; font-weight: bold; margin-top: 5px; }
 
-    /* STATUS BAR (ÉVES KERET) */
-    .status-bar {
+    /* DASHBOARD (STICKY) */
+    .dashboard-sticky {
         position: sticky; top: 10px; z-index: 100;
-        background: rgba(30, 41, 59, 0.98); border: 1px solid var(--primary); border-radius: 12px;
-        padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px;
+        background: rgba(30, 41, 59, 0.98); backdrop-filter: blur(10px);
+        border: 1px solid var(--primary); border-radius: 16px; padding: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 25px;
     }
-    .sb-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.8rem; font-weight: bold; }
-    .prog-bg { height: 10px; background: #0f172a; border-radius: 5px; overflow: hidden; position: relative; border: 1px solid var(--border); }
-    .prog-fill { height: 100%; transition: width 0.5s ease; background: var(--success); }
-    .time-line { position: absolute; top:0; bottom:0; width:3px; background:white; z-index:5; box-shadow: 0 0 5px white; }
+    .db-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px; }
+    .db-val { font-size: 1.4rem; font-weight: 900; color: white; }
+    .db-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; font-weight: 800; }
+    
+    .progress-track { height: 10px; background: #0f172a; border-radius: 5px; overflow: hidden; position: relative; margin-top: 8px; border: 1px solid var(--border); }
+    .progress-fill { height: 100%; transition: width 0.5s ease; }
+    .marker { position: absolute; top: 0; bottom: 0; width: 2px; background: white; z-index: 2; box-shadow: 0 0 5px white; }
 
-    /* HÓNAP KÁRTYA - CSAK ÁRAM */
+    /* HÓNAP KÁRTYA */
     .month-list { display: flex; flex-direction: column; gap: 15px; }
-    .card { 
-        background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 0; 
-        overflow: hidden; transition: 0.3s;
+    .month-card { 
+        background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; 
+        transition: 0.3s; position: relative;
     }
-    .card.active { border: 2px solid var(--accent); background: #2a3441; }
+    .month-card.active { border: 2px solid var(--primary); background: #263345; }
     
-    .c-header {
-        background: rgba(0,0,0,0.2); padding: 10px 15px; 
-        display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);
-    }
-    .c-title { font-weight: 800; font-size: 0.9rem; color: white; }
-    .c-prev { font-size: 0.7rem; color: var(--dim); }
-
-    .c-body { padding: 15px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 15px; align-items: center; }
+    .mc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .mc-title { font-weight: 800; font-size: 0.9rem; color: white; text-transform: uppercase; }
+    .prev-val { font-family: monospace; color: var(--dim); }
     
-    .inp { 
+    .input-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; align-items: center; }
+    
+    .reading-input { 
         width: 100%; background: #0f172a; border: 1px solid var(--border); color: white; 
-        padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; text-align: center;
+        padding: 12px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; text-align: center; outline: none;
+        font-family: monospace; letter-spacing: 1px;
     }
-    .inp:focus { border-color: var(--accent); outline: none; }
-
-    .res-box { text-align: right; }
-    .res-val { font-size: 1.4rem; font-weight: 900; color: var(--accent); }
-    .res-sub { font-size: 0.75rem; color: var(--dim); margin-top: 3px; }
-
-    /* FIX KÖLTSÉGEK SZEKCIÓ */
-    .fix-section { margin-top: 30px; border-top: 2px dashed var(--border); padding-top: 20px; }
-    .fix-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; cursor: pointer; }
-    .fix-title { font-weight: bold; color: var(--primary); text-transform: uppercase; }
-    .fix-total { font-weight: 900; font-size: 1.2rem; color: white; }
+    .reading-input:focus { border-color: var(--accent); }
     
-    .fix-list { display: none; background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-    .fix-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; }
-    .fix-inp { width: 80px; background: #0f172a; border: 1px solid var(--border); color: white; text-align: right; border-radius: 4px; padding: 4px; }
+    .total-display { font-size: 1.3rem; font-weight: 900; color: var(--primary); text-align: right; margin-top: 5px; }
+    .cons-display { font-size: 0.8rem; color: var(--dim); text-align: right; font-family: monospace; }
+
+    .info-box { font-size: 0.75rem; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #334155; color:#94a3b8; line-height: 1.4; }
 
     /* FAB */
-    .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--primary); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer; z-index: 100; }
+    .fab { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5); cursor: pointer; z-index: 999; }
 
-    /* PDF */
+    /* PDF MODE */
     .pdf-mode { background: white !important; color: black !important; padding: 20px !important; }
-    .pdf-mode .card, .pdf-mode .status-bar, .pdf-mode .fix-list { background: white !important; border: 1px solid #ccc !important; color: black !important; box-shadow: none !important; page-break-inside: avoid; }
-    .pdf-mode input { color: black !important; border: none !important; background: transparent !important; font-weight: bold !important; }
-    .pdf-mode .fab, .pdf-mode .fix-header span { display: none !important; }
-    .pdf-mode .fix-list { display: block !important; }
+    .pdf-mode .dashboard-sticky, .pdf-mode .month-card { background: white !important; border: 1px solid #ccc !important; box-shadow: none !important; page-break-inside: avoid; }
+    .pdf-mode input { color: black !important; background: transparent !important; border: none !important; font-weight: 900 !important; text-align: left !important; padding: 0 !important; }
+    .pdf-mode .fab { display: none !important; }
+    .pdf-mode .total-display { color: #1e3a8a !important; }
 </style>
 </head>
 <body>
 
-<h1>ÁRAM + REZSI</h1>
-
-<div class="status-bar">
-    <div class="sb-row">
-        <span>ÉVES FOGYASZTÁS (8700 kWh)</span>
-        <span id="d-rem" style="color:var(--success)">0 kWh maradt</span>
-    </div>
-    <div class="prog-bg">
-        <div class="prog-fill" id="p-bar" style="width:0%"></div>
-        <div class="time-line" id="t-line" style="left:0%"></div>
-    </div>
-    <div style="text-align:center; font-size:0.7rem; margin-top:5px; color:var(--dim);" id="d-stat">...</div>
+<div class="header-box">
+    <h1>MVM ÁRAM KALKULÁTOR</h1>
+    <div class="subtitle">3 TIZEDES PONTOSSÁGGAL</div>
 </div>
 
-<div class="month-list" id="m-list"></div>
-
-<div class="fix-section">
-    <div class="fix-header" onclick="toggleFix()">
-        <span class="fix-title">⬇️ EGYÉB FIXEK (TV, NET...)</span>
-        <span class="fix-total"><span id="fix-sum">0</span> Ft</span>
+<div class="dashboard-sticky">
+    <div class="db-row">
+        <div>
+            <div class="db-label">Fogyasztás (Szept-től)</div>
+            <div class="db-val" id="d-cons">0.000 kWh</div>
+        </div>
+        <div style="text-align:right">
+            <div class="db-label">Keret (8700) Maradék</div>
+            <div class="db-val" id="d-rem" style="color:var(--success)">0.000 kWh</div>
+        </div>
     </div>
-    <div class="fix-list" id="fix-cont"></div>
+    <div class="progress-track">
+        <div class="progress-fill" id="prog-bar" style="width:0%; background:var(--success)"></div>
+        <div class="marker" id="time-marker" style="left:0%"></div>
+    </div>
+    <div style="text-align:center; font-size:0.7rem; color:var(--dim); margin-top:5px;" id="d-status">...</div>
 </div>
 
-<div class="fab" onclick="genPDF()">📄</div>
+<div class="month-list" id="month-list"></div>
+
+<div class="fab" onclick="genPDF()" title="Mentés PDF-be">💾</div>
 
 <script>
-    // --- BÁZIS ---
-    // Augusztus végi záró (Szept 1. nyitó)
-    const START_METER = 17232; 
+    // --- KONFIGURÁCIÓ ---
+    // Start: Augusztus végi záró (Szept 1. nyitó)
+    const START_METER = 17232.475; 
+    
     const LIMITS = { mo: 210, yr: 8700 };
-    const PRICES = { r: 36.386, p: 70.104 };
+    const PRICES = { r: 36.386, p: 70.104 }; 
 
-    // Hónapok
     const MONTHS = [
-        { id: '2025-09', name: '2025. SZEPT' },
-        { id: '2025-10', name: '2025. OKT' },
-        { id: '2025-11', name: '2025. NOV' },
-        { id: '2025-12', name: '2025. DEC' },
-        { id: '2026-01', name: '2026. JAN' },
-        { id: '2026-02', name: '2026. FEBR' },
-        { id: '2026-03', name: '2026. MÁRC' },
-        { id: '2026-04', name: '2026. ÁPR' },
-        { id: '2026-05', name: '2026. MÁJ' },
-        { id: '2026-06', name: '2026. JÚN' },
-        { id: '2026-07', name: '2026. JÚL' },
-        { id: '2026-08', name: '2026. AUG' }
+        { id: '2025-09', name: '2025. SZEPTEMBER' },
+        { id: '2025-10', name: '2025. OKTÓBER' },
+        { id: '2025-11', name: '2025. NOVEMBER' },
+        { id: '2025-12', name: '2025. DECEMBER' },
+        { id: '2026-01', name: '2026. JANUÁR' },
+        { id: '2026-02', name: '2026. FEBRUÁR' },
+        { id: '2026-03', name: '2026. MÁRCIUS' },
+        { id: '2026-04', name: '2026. ÁPRILIS' },
+        { id: '2026-05', name: '2026. MÁJUS' },
+        { id: '2026-06', name: '2026. JÚNIUS' },
+        { id: '2026-07', name: '2026. JÚLIUS' },
+        { id: '2026-08', name: '2026. AUGUSZTUS' }
     ];
 
-    // FIXEK (Csak tájékoztató jellegű, külön adjuk hozzá a végén ha akarod)
-    const DEFAULT_FIXES = [
-        { id: 'tv', name: 'TV', val: 7142 },
-        { id: 'tel', name: 'Telefon', val: 4500 },
-        { id: 'net', name: 'Internet', val: 2880 },
-        { id: 'viz', name: 'Víz', val: 2500 },
-        { id: 'bizt', name: 'Biztosítás', val: 2386 },
-        { id: 'szemet', name: 'Szemét', val: 667 },
-        { id: 'komm', name: 'Adó', val: 600 }
-        // Villany átalányt IDE NE ÍRJ, mert azt fent számoljuk pontosan!
-    ];
-
-    // ADATOK BETÖLTÉSE (A CSV-kből kinyert pontos számok)
-    let readings = JSON.parse(localStorage.getItem('pure_v20_readings')) || {
-        '2025-09': 17583,
-        '2025-10': 17814,
-        '2025-11': 18372,
-        '2025-12': 19233
+    // ADATOK BETÖLTÉSE (CSV PONTOS ÉRTÉKEK)
+    let readings = JSON.parse(localStorage.getItem('prec_v21_readings')) || {
+        '2025-09': 17583.501,
+        '2025-10': 17814.641,
+        '2025-11': 18372.135,
+        '2025-12': 19233.215
     };
-    let fixes = JSON.parse(localStorage.getItem('pure_v20_fixes')) || {};
-
+    
     function init() {
-        renderFixes();
         renderList();
-        calc();
-    }
-
-    function renderFixes() {
-        const c = document.getElementById('fix-cont');
-        c.innerHTML = '';
-        DEFAULT_FIXES.forEach(f => {
-            const val = fixes[f.id] !== undefined ? fixes[f.id] : f.val;
-            c.innerHTML += `
-            <div class="fix-item">
-                <span>${f.name}</span>
-                <input type="number" class="fix-inp" value="${val}" onchange="saveFix('${f.id}', this.value)">
-            </div>`;
-        });
+        calcAll();
     }
 
     function renderList() {
-        const c = document.getElementById('m-list');
+        const c = document.getElementById('month-list');
         c.innerHTML = '';
-        const nowId = new Date().toISOString().slice(0, 7);
+        const nowId = getNowId();
 
         MONTHS.forEach(m => {
             const val = readings[m.id] || '';
-            const act = m.id === nowId ? 'active' : '';
+            const activeClass = m.id === nowId ? 'active' : '';
+            
             c.innerHTML += `
-            <div class="card ${act}" id="card-${m.id}">
-                <div class="c-header">
-                    <span class="c-title">${m.name}</span>
-                    <span class="c-prev">Nyitó: <span id="start-${m.id}">...</span></span>
+            <div class="month-card ${activeClass}" id="card-${m.id}">
+                <div class="mc-top">
+                    <span class="mc-title">${m.name}</span>
+                    <span style="font-size:0.7rem; color:var(--dim);">Nyitó: <span id="start-${m.id}" class="prev-val">...</span></span>
                 </div>
-                <div class="c-body">
+                <div class="input-grid">
                     <div>
-                        <input type="number" class="inp" placeholder="Leolvasás" value="${val}" oninput="saveRead('${m.id}', this.value)">
+                        <input type="number" step="0.001" class="reading-input" placeholder="00000.000" 
+                            value="${val}" oninput="saveReading('${m.id}', this.value)">
                     </div>
-                    <div class="res-box">
-                        <div class="res-val" id="cost-${m.id}">0 Ft</div>
-                        <div class="res-sub" id="cons-${m.id}">...</div>
+                    <div style="text-align:right;">
+                        <div class="total-display" id="cost-${m.id}">0 Ft</div>
+                        <div class="cons-display"><span id="cons-${m.id}" style="color:white; font-weight:700;">0</span> kWh</div>
                     </div>
                 </div>
-                <div id="total-${m.id}" style="text-align:right; padding:5px 15px; font-size:0.8rem; border-top:1px dashed #334155; color:white; font-weight:bold;"></div>
+                <div id="info-${m.id}" class="info-box"></div>
             </div>`;
         });
         
         setTimeout(() => {
-            const el = document.querySelector('.card.active');
-            if(el) el.scrollIntoView({behavior:"smooth", block:"center"});
+            const act = document.querySelector('.month-card.active');
+            if(act) act.scrollIntoView({behavior:"smooth", block:"center"});
         }, 500);
     }
 
-    function calc() {
-        // 1. Fixek összege
-        let fixSum = 0;
-        DEFAULT_FIXES.forEach(f => {
-            fixSum += (fixes[f.id] !== undefined ? fixes[f.id] : f.val);
-        });
-        document.getElementById('fix-sum').innerText = fixSum.toLocaleString();
-
-        // 2. Láncolt számítás (Csak az áram)
+    // --- FŐ SZÁMOLÁS (PRECÍZIÓS) ---
+    function calcAll() {
         let prev = START_METER;
-        let totalCons = 0;
+        let yearlyTotal = 0;
 
         MONTHS.forEach(m => {
-            document.getElementById(`start-${m.id}`).innerText = prev;
+            document.getElementById(`start-${m.id}`).innerText = prev.toFixed(3);
             const curr = readings[m.id];
             
             const costEl = document.getElementById(`cost-${m.id}`);
             const consEl = document.getElementById(`cons-${m.id}`);
-            const totalEl = document.getElementById(`total-${m.id}`);
+            const infoEl = document.getElementById(`info-${m.id}`);
 
-            if (curr && curr > prev) {
-                const cons = curr - prev;
-                totalCons += cons;
+            if(curr && curr > prev) {
+                // 3 tizedes pontosság
+                let cons = curr - prev;
+                cons = Math.round(cons * 1000) / 1000; // Lebegőpontos hiba javítás
+                yearlyTotal += cons;
 
-                // Áram Matek
+                // MVM számítás
                 const r = Math.min(cons, LIMITS.mo);
                 const p = Math.max(0, cons - LIMITS.mo);
-                const mvmCost = Math.round((r * PRICES.r) + (p * PRICES.p));
                 
-                costEl.innerText = `${mvmCost.toLocaleString()} Ft`; // CSAK ÁRAM
+                const rezsiCost = r * PRICES.r;
+                const piaciCost = p * PRICES.p;
+                const totalCost = Math.round(rezsiCost + piaciCost); // Forintot kerekítjük
+
+                consEl.innerText = cons.toFixed(3);
+                costEl.innerText = `${totalCost.toLocaleString()} Ft`;
                 
-                let consTxt = `${cons} kWh`;
-                if(p > 0) consTxt += ` (⚠️ ${p} piaci)`;
-                consEl.innerHTML = consTxt;
-
-                // Végösszeg kiírása alulra
-                const grand = mvmCost + fixSum;
-                totalEl.innerHTML = `MVM: ${mvmCost} + Fixek: ${fixSum} = <span style="color:var(--primary); font-size:1rem;">${grand.toLocaleString()} Ft</span>`;
-
-                prev = curr;
+                let infoText = `<b>Részletezés:</b><br>`;
+                infoText += `Rezsi: ${r.toFixed(3)} kWh × ${PRICES.r} = ${Math.round(rezsiCost).toLocaleString()} Ft.<br>`;
+                
+                if(p > 0) {
+                    infoText += `Piaci: <span style="color:var(--danger)">${p.toFixed(3)} kWh</span> × ${PRICES.p} = ${Math.round(piaciCost).toLocaleString()} Ft.`;
+                } else {
+                    infoText += `<span style="color:var(--success)">Teljesen rezsicsökkentett ár.</span>`;
+                }
+                
+                infoEl.innerHTML = infoText;
+                
+                prev = curr; 
             } else {
                 costEl.innerText = "-";
-                consEl.innerText = "Nincs adat";
-                totalEl.innerHTML = "";
+                consEl.innerText = "-";
+                infoEl.innerHTML = "Várakozás adatra...";
                 if(curr) prev = curr; 
             }
         });
 
-        // 3. Status Bar
-        const rem = LIMITS.yr - totalCons;
-        const pct = (totalCons / LIMITS.yr) * 100;
-        document.getElementById('d-rem').innerText = `${rem.toLocaleString()} kWh maradt`;
-        document.getElementById('p-bar').style.width = Math.min(pct, 100) + "%";
+        updateDashboard(yearlyTotal);
+    }
+
+    function updateDashboard(total) {
+        const rem = LIMITS.yr - total;
+        const pct = (total / LIMITS.yr) * 100;
+        
+        document.getElementById('d-cons').innerText = total.toFixed(3) + " kWh";
+        document.getElementById('d-rem').innerText = rem.toFixed(3) + " kWh";
+        document.getElementById('prog-bar').style.width = Math.min(pct, 100) + "%";
         
         // Idővonal
         const start = new Date('2025-08-31');
         const end = new Date('2026-08-31');
         const now = new Date();
         const tPct = ((now - start) / (end - start)) * 100;
-        document.getElementById('t-line').style.left = Math.min(Math.max(tPct,0),100) + "%";
         
-        const stat = document.getElementById('d-stat');
+        document.getElementById('time-marker').style.left = Math.min(Math.max(tPct,0),100) + "%";
+        
+        const stText = document.getElementById('d-status');
+        const bar = document.getElementById('prog-bar');
+        
         if(pct > tPct) {
-            document.getElementById('p-bar').style.background = "var(--danger)";
-            stat.innerHTML = "TÚLFOGYASZTÁS! (A színes csík megelőzte a fehéret)";
+            bar.style.background = "var(--danger)";
+            stText.innerHTML = "<span style='color:var(--danger)'>TÚLFOGYASZTÁS!</span> (A csík megelőzte a mai napot)";
         } else {
-            document.getElementById('p-bar').style.background = "var(--success)";
-            stat.innerHTML = "RENDBEN. (A színes csík a fehér mögött van)";
+            bar.style.background = "var(--success)";
+            stText.innerHTML = "<span style='color:var(--success)'>RENDBEN.</span> (Van tartalék)";
         }
     }
 
-    function saveRead(id, val) {
+    // --- ESZKÖZÖK ---
+    function saveReading(id, val) {
         if(val) readings[id] = parseFloat(val);
         else delete readings[id];
-        localStorage.setItem('pure_v20_readings', JSON.stringify(readings));
-        calc();
+        localStorage.setItem('prec_v21_readings', JSON.stringify(readings));
+        calcAll();
     }
 
-    function saveFix(id, val) {
-        fixes[id] = parseFloat(val);
-        localStorage.setItem('pure_v20_fixes', JSON.stringify(fixes));
-        calc();
-    }
-
-    function toggleFix() {
-        const el = document.getElementById('fix-cont');
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    function getNowId() {
+        const d = new Date();
+        let m = d.getMonth() + 1;
+        let y = d.getFullYear();
+        return `${y}-${m.toString().padStart(2,'0')}`;
     }
 
     function genPDF() {
         document.body.classList.add('pdf-mode');
-        // Fix lista kinyitása PDF-hez
-        const fixList = document.getElementById('fix-cont');
-        fixList.style.display = 'block';
-        
-        const opt = { margin: 5, filename: 'Tiszta_Rezsi_Naplo.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        html2pdf().set(opt).from(document.body).save().then(() => {
-            document.body.classList.remove('pdf-mode');
-            fixList.style.display = 'none';
-        });
+        const opt = { margin: 5, filename: 'MVM_Tiszta_Naplo.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        html2pdf().set(opt).from(document.body).save().then(() => document.body.classList.remove('pdf-mode'));
     }
 
     init();
