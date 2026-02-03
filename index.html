@@ -155,6 +155,11 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .cons-col { text-align: right; color: var(--dim); font-size: 0.8rem; }
 .cost-col { font-weight: 700; text-align: right; color: var(--primary); }
 
+/* Törlés gomb a táblázatban */
+.del-col { width: 30px; text-align: center; }
+.del-btn { background: none; border: none; cursor: pointer; font-size: 1rem; opacity: 0.5; transition: 0.3s; padding: 5px; }
+.del-btn:hover { opacity: 1; transform: scale(1.2); }
+
 .breakdown-text { font-size: 0.65rem; color: var(--dim); display: block; margin-top: 2px; font-weight: normal; }
 .breakdown-split { color: var(--success); }
 .breakdown-over { color: var(--danger); }
@@ -207,6 +212,10 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode .time-marker { background: #334155 !important; }
 .pdf-export-mode .marker-label { color: #334155 !important; background: transparent !important; font-weight:bold; top: -25px; border:none; }
 .pdf-export-mode .quota-val-big { color: #1e293b !important; }
+
+/* PDF-ben a törlés oszlop elrejtése */
+.pdf-export-mode .del-col, .pdf-export-mode .del-btn { display: none !important; }
+.pdf-export-mode th:last-child, .pdf-export-mode td:last-child { border: none !important; width: 0 !important; padding: 0 !important; } 
 
 </style>
 </head>
@@ -335,6 +344,7 @@ td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
                     <th>Óra</th>
                     <th style="text-align:right">Fogy. (kWh)</th>
                     <th style="text-align:right">Részletek & Ár</th>
+                    <th class="del-col"></th>
                 </tr>
             </thead>
             <tbody id="mvmHistoryBody"></tbody>
@@ -478,6 +488,14 @@ function updateYearlyQuota(liveConsumption = 0) {
     }
 }
 
+// --- ÚJ TÖRLÉS FUNKCIÓ ---
+function deleteEntry(originalIndex) {
+    if(!confirm("Biztosan törlöd ezt a bejegyzést? Ha a közepéről törölsz, a számítások változhatnak!")) return;
+    historyLog.splice(originalIndex, 1);
+    localStorage.setItem('secure_history_pro', JSON.stringify(historyLog));
+    updateTable();
+}
+
 // --- SZÁMOLÓ ÉS TÁBLÁZAT FRISSÍTŐ ---
 function updateTable() {
     const tbody = document.getElementById('mvmHistoryBody');
@@ -542,11 +560,15 @@ function updateTable() {
                 <strong>${formatMoney(liveCost)}</strong>
                 ${tableBreakdown}
             </td>
+            <td class="del-col"></td>
         </tr>`;
     }
 
-    // ELŐZMÉNYEK
-    [...historyLog].reverse().forEach(row => {
+    // ELŐZMÉNYEK (Törlés gombbal)
+    // Megőrizzük az eredeti indexet a törléshez
+    const historyWithIndex = historyLog.map((item, index) => ({...item, originalIndex: index}));
+    
+    [...historyWithIndex].reverse().forEach(row => {
         let rCost = 0, pCost = 0;
         let cDetail = row.cons;
         
@@ -576,10 +598,14 @@ function updateTable() {
                 ${Math.round(row.cost).toLocaleString()} Ft
                 ${breakdownHtml}
             </td>
+            <td class="del-col">
+                <button class="del-btn" onclick="deleteEntry(${row.originalIndex})">🗑️</button>
+            </td>
         </tr>`;
     });
 
     if(historyLog.length > 0) document.getElementById('mvmPrev').value = historyLog[historyLog.length-1].read;
+    else document.getElementById('mvmPrev').value = ""; // Ha minden törölve, üres
 }
 
 // MENTÉS
@@ -594,25 +620,28 @@ function save() {
     
     const currMvm = parseFloat(document.getElementById('mvmCurr').value);
     const prevMvm = parseFloat(document.getElementById('mvmPrev').value);
-    const recordDate = document.getElementById('recordDate').value; // Dátum a választóból
+    const recordDate = document.getElementById('recordDate').value; 
     
+    // Ha nincs előző adat (mindent kitöröltek), akkor a 0-hoz képest számol vagy kezdeti érték kell
+    // Most: ha nincs prev, 0-nak vesszük, de figyelmeztethetünk is.
+    const safePrev = prevMvm || 0;
+
     let cost = 0, cons = 0;
-    if(currMvm > prevMvm) {
-        cons = currMvm - prevMvm;
+    if(currMvm > safePrev) {
+        cons = currMvm - safePrev;
         cost = (cons <= MVM_LIMIT) ? cons * P_REZSI : (MVM_LIMIT * P_REZSI) + ((cons - MVM_LIMIT) * P_PIACI);
     }
     
     const momPays = calc();
     
-    if(currMvm && currMvm > prevMvm && recordDate) {
+    if(currMvm && currMvm > safePrev && recordDate) {
         historyLog.push({ date: recordDate, read: currMvm, cons: cons, cost: cost, momTotal: momPays });
-        // Dátum szerinti rendezés, hogy a táblázat helyes legyen ha visszafelé dátumozol
+        // Dátum szerinti rendezés
         historyLog.sort((a, b) => new Date(a.date) - new Date(b.date));
         
         localStorage.setItem('secure_history_pro', JSON.stringify(historyLog));
         
         document.getElementById('mvmCurr').value = "";
-        // Visszaállítás mára mentés után
         document.getElementById('recordDate').valueAsDate = new Date(); 
         
         updateTable(); 
