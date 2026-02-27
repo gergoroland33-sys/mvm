@@ -662,7 +662,6 @@ function updateYearlyQuota(liveConsumption = 0) {
     const statusTextEl = document.getElementById('qStatusText');
 
     // MVM bruttó árak kWh-ra vetítve a pontos forintosításhoz
-    const grossResPrice = (NET_PRICE_A1_RES + NET_RHD_TRANS + NET_RHD_DIST) * VAT;
     const grossMktPrice = (NET_PRICE_A1_MKT + NET_RHD_TRANS + NET_RHD_DIST) * VAT;
 
     if(totalUsed === 0) {
@@ -682,7 +681,7 @@ function updateYearlyQuota(liveConsumption = 0) {
             statusValEl.className = "stat-status status-bad";
             
             // Túlfogyasztásnál drága (piaci) áron számolunk
-            const diffHuf = Math.round(diffKwh * grossMktPrice);
+            const diffHuf = Math.round(Math.abs(diffKwh) * grossMktPrice);
             statusHufEl.innerText = "+" + diffHuf.toLocaleString('hu-HU') + " Ft";
             statusHufEl.className = "stat-status status-bad";
 
@@ -693,9 +692,9 @@ function updateYearlyQuota(liveConsumption = 0) {
             statusValEl.innerText = Math.round(diffKwh) + " kWh"; 
             statusValEl.className = "stat-status status-good";
             
-            // Megtakarításnál a rezsiárat spóroljuk (mivel a diffKwh negatív, egyből jó lesz az előjel is)
-            const diffHuf = Math.round(diffKwh * grossResPrice);
-            statusHufEl.innerText = diffHuf.toLocaleString('hu-HU') + " Ft";
+            // Mivel 8700-as kerettel jócskán a rezsicsökkentett ár felett vagy, a megspórolt áram értéke is a drágább, piaci áron számolódik pontosan.
+            const diffHuf = Math.round(Math.abs(diffKwh) * grossMktPrice);
+            statusHufEl.innerText = "-" + diffHuf.toLocaleString('hu-HU') + " Ft";
             statusHufEl.className = "stat-status status-good";
 
             statusTextEl.innerText = "Megtakarítás";
