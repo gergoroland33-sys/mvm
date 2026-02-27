@@ -322,6 +322,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
     border: 1px solid #ddd;
 }
 .pdf-export-mode .stat-box strong { color: #000 !important; font-size: 1rem !important; }
+.pdf-export-mode #qStatusHuf { font-size: 1.1rem !important; color: inherit !important; }
 
 /* Elrejtés */
 .pdf-export-mode .del-col, .pdf-export-mode .del-btn { display: none !important; }
@@ -380,6 +381,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             </div>
             <div class="stat-box">
                 <strong id="qStatusDiff" class="stat-status">...</strong>
+                <div id="qStatusHuf" class="stat-status" style="font-size: 0.85rem; font-weight: 900; margin: 3px 0;">0 Ft</div>
                 <span id="qStatusText">Állapot</span>
             </div>
         </div>
@@ -656,11 +658,18 @@ function updateYearlyQuota(liveConsumption = 0) {
     document.getElementById('qUsedPct').innerText = Math.round(usagePercent) + "%";
 
     const statusValEl = document.getElementById('qStatusDiff');
+    const statusHufEl = document.getElementById('qStatusHuf');
     const statusTextEl = document.getElementById('qStatusText');
+
+    // MVM bruttó árak kWh-ra vetítve a pontos forintosításhoz
+    const grossResPrice = (NET_PRICE_A1_RES + NET_RHD_TRANS + NET_RHD_DIST) * VAT;
+    const grossMktPrice = (NET_PRICE_A1_MKT + NET_RHD_TRANS + NET_RHD_DIST) * VAT;
 
     if(totalUsed === 0) {
         statusValEl.innerText = "0 kWh";
         statusValEl.className = "stat-status status-neutral";
+        statusHufEl.innerText = "0 Ft";
+        statusHufEl.className = "stat-status status-neutral";
         statusTextEl.innerText = "Várakozás adatra...";
         statusTextEl.style.color = "#94a3b8";
     } else {
@@ -671,12 +680,24 @@ function updateYearlyQuota(liveConsumption = 0) {
             uBar.classList.add('warning');
             statusValEl.innerText = "+" + Math.round(diffKwh) + " kWh";
             statusValEl.className = "stat-status status-bad";
+            
+            // Túlfogyasztásnál drága (piaci) áron számolunk
+            const diffHuf = Math.round(diffKwh * grossMktPrice);
+            statusHufEl.innerText = "+" + diffHuf.toLocaleString('hu-HU') + " Ft";
+            statusHufEl.className = "stat-status status-bad";
+
             statusTextEl.innerText = "Túllépés";
             statusTextEl.style.color = "#ef4444";
         } else {
             uBar.classList.remove('warning');
             statusValEl.innerText = Math.round(diffKwh) + " kWh"; 
             statusValEl.className = "stat-status status-good";
+            
+            // Megtakarításnál a rezsiárat spóroljuk (mivel a diffKwh negatív, egyből jó lesz az előjel is)
+            const diffHuf = Math.round(diffKwh * grossResPrice);
+            statusHufEl.innerText = diffHuf.toLocaleString('hu-HU') + " Ft";
+            statusHufEl.className = "stat-status status-good";
+
             statusTextEl.innerText = "Megtakarítás";
             statusTextEl.style.color = "#10b981";
         }
