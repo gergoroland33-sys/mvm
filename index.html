@@ -40,9 +40,9 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
     font-family: Georgia, serif; font-size: 1.15rem; font-weight: 800; cursor: pointer;
 }
 .help-btn:active { transform: scale(0.92); background: var(--primary); color: white; }
-.tab-switcher { display: flex; gap: 8px; margin: 12px 0 0; padding: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); border-radius: 12px; }
-.tab-switcher button { flex: 1; min-width: 0; padding: 9px 7px; border: 1px solid transparent; border-radius: 8px; color: var(--dim); background: transparent; font-size: 0.77rem; font-weight: 800; cursor: pointer; }
-.tab-switcher button.active { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.55); color: #dbeafe; }
+.tab-switcher { position: sticky; top: max(8px, env(safe-area-inset-top)); z-index: 160; display: flex; gap: 4px; margin: 8px 0 14px; padding: 4px; border: 1px solid rgba(148,163,184,0.32); background: rgba(15,23,42,0.94); backdrop-filter: blur(14px); box-shadow: 0 8px 22px rgba(0,0,0,0.24); border-radius: 11px; }
+.tab-switcher button { flex: 1; min-width: 0; padding: 9px 7px; border: 1px solid transparent; border-radius: 7px; color: #aebbd0; background: transparent; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.01em; cursor: pointer; }
+.tab-switcher button.active { background: rgba(59,130,246,0.18); border-color: rgba(96,165,250,0.42); color: #e5efff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
 .app-tab[hidden] { display: none !important; }
 .fab-group[hidden] { display: none !important; }
 
@@ -123,8 +123,9 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .boiler-action.secondary { border-color: var(--border); background: rgba(255,255,255,0.05); color: var(--text); }
 .boiler-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .boiler-table-wrap table { min-width: 560px; }
+.boiler-history-mobile { display: none; }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
     .realtime-meter { padding: 12px; overflow: hidden; }
     .realtime-meter-grid { grid-template-columns: minmax(0, 1fr); gap: 11px; }
     .realtime-meter input { min-width: 0; font-size: 16px; }
@@ -147,6 +148,17 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
     .btn { min-width: 0; padding: 11px 14px; font-size: 0.8rem; }
     .boiler-form { grid-template-columns: minmax(0, 1fr); }
     .boiler-form .full { grid-column: auto; }
+    .boiler-table-wrap { display: none; }
+    .boiler-history-mobile { display: grid; gap: 10px; }
+    .boiler-history-item { padding: 12px; border: 1px solid rgba(148,163,184,0.28); border-radius: 12px; background: rgba(255,255,255,0.035); }
+    .boiler-history-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding-bottom: 8px; margin-bottom: 9px; border-bottom: 1px solid rgba(148,163,184,0.18); }
+    .boiler-history-date { color: #e2e8f0; font-size: 0.82rem; font-weight: 850; }
+    .boiler-history-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 9px; }
+    .boiler-history-key { display: block; color: var(--dim); font-size: 0.64rem; font-weight: 800; text-transform: uppercase; margin-bottom: 3px; }
+    .boiler-history-value { color: #f8fafc; font-size: 0.86rem; font-weight: 850; }
+    .boiler-history-cost { grid-column: 1 / -1; padding-top: 9px; border-top: 1px solid rgba(148,163,184,0.18); }
+    .boiler-history-cost strong { color: #93c5fd; font-size: 1rem; }
+    .boiler-history-cost small { display: block; color: var(--dim); font-size: 0.7rem; line-height: 1.4; margin-top: 4px; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
@@ -334,6 +346,9 @@ input[type="month"] { color-scheme: dark; font-family: 'Inter', sans-serif; text
     .mvm-mini { width: calc(100% - 2px) !important; margin-right: 2px !important; }
     .mvm-mini .mvm-field, .mvm-mini .mvm-field input { box-sizing: border-box !important; }
     .mvm-mini .mvm-field input { width: calc(100% - 1px) !important; margin-right: 1px; }
+    /* A telefonok natív dátummezője néhány böngészőben 1-2 px-szel szélesebb: hagyunk neki biztos helyet. */
+    .realtime-meter-grid > div, .cycle-settings .cyc-field { min-width: 0 !important; padding-right: 3px; }
+    #realtimeDate, #cfgStartDate { display: block; width: calc(100% - 3px) !important; max-width: calc(100% - 3px) !important; min-width: 0 !important; margin-right: 3px !important; box-sizing: border-box !important; }
 }
 
 /* TÁBLÁZAT */
@@ -420,7 +435,11 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode #addExpenseBtn, .pdf-export-mode .del-item-btn { display: none !important; }
 .pdf-export-mode .realtime-meter { display: none !important; }
 .pdf-export-mode .coach-panel, .pdf-export-mode .help-btn { display: none !important; }
-.pdf-export-mode #boilerTab, .pdf-export-mode .tab-switcher { display: none !important; }
+.pdf-export-mode .tab-switcher { display: none !important; }
+.pdf-export-mode #boilerTab { display: block !important; }
+.pdf-export-mode .boiler-action { display: none !important; }
+.pdf-export-mode .boiler-table-wrap { display: block !important; overflow: visible !important; }
+.pdf-export-mode .boiler-history-mobile { display: none !important; }
 
 </style>
 </head>
@@ -438,10 +457,10 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             <div class="subtitle" id="currentMonthDate">2026. JANUÁR</div>
         </div>
         <button class="refresh-btn" onclick="refreshPage(this)" title="Oldal frissítése">↻</button>
-        <div class="tab-switcher" role="tablist" aria-label="Villanyórák">
-            <button id="dayTabBtn" class="active" type="button" onclick="switchTab('day')">☀️ Nappali áram</button>
-            <button id="boilerTabBtn" type="button" onclick="switchTab('boiler')">🌙 Bojler / éjszakai</button>
-        </div>
+    </div>
+    <div class="tab-switcher" role="tablist" aria-label="Villanyórák">
+        <button id="dayTabBtn" class="active" type="button" onclick="switchTab('day')">Nappali áram</button>
+        <button id="boilerTabBtn" type="button" onclick="switchTab('boiler')">Bojler · B alap</button>
     </div>
 
     <div class="card" id="quotaCard">
@@ -688,6 +707,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
                 <thead><tr><th>Leolvasás dátuma</th><th style="text-align:right">Óraállás</th><th style="text-align:right">Fogyasztás az előző óta</th><th style="text-align:right">Részlet & becsült ár</th><th></th></tr></thead>
                 <tbody id="boilerHistoryBody"></tbody>
             </table></div>
+            <div class="boiler-history-mobile" id="boilerHistoryMobile"></div>
         </div>
     </div>
 </div>
@@ -1670,10 +1690,16 @@ function deleteBoilerReading(index) {
 
 function renderBoilerHistory() {
     const body = document.getElementById('boilerHistoryBody');
+    const mobile = document.getElementById('boilerHistoryMobile');
     body.innerHTML = '';
+    mobile.innerHTML = '';
     const cfg = getBoilerConfig();
     const rows = getBoilerSortedHistory();
-    if (!rows.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8">Még nincs mentett bojler-leolvasás.</td></tr>'; return; }
+    if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8">Még nincs mentett bojler-leolvasás.</td></tr>';
+        mobile.innerHTML = '<div class="boiler-history-item" style="text-align:center;color:#94a3b8">Még nincs mentett bojler-leolvasás.</div>';
+        return;
+    }
     rows.forEach((row, index) => {
         const previousValue = index === 0 ? cfg.baseReading : rows[index - 1].value;
         const previousCost = index === 0 ? 0 : calculateBoilerCost(rows[index - 1].value - cfg.baseReading, cfg.startDate, rows[index - 1].date).total;
@@ -1683,7 +1709,17 @@ function renderBoilerHistory() {
         const detail = cumulative.marketPart > 0
             ? `Kedvezményes: ${Math.round(cumulative.discountPart).toLocaleString('hu-HU')} kWh<br><span class="breakdown-over">Piaci: ${Math.round(cumulative.marketPart).toLocaleString('hu-HU')} kWh</span>`
             : `Kedvezményes: ${Math.round(cumulative.discountPart).toLocaleString('hu-HU')} kWh`;
-        body.innerHTML += `<tr><td>${fmtDateHu(new Date(row.date + 'T00:00:00'))}</td><td style="text-align:right">${row.value.toLocaleString('hu-HU')} kWh</td><td style="text-align:right">${intervalUse === null ? '–' : fmtKwh(intervalUse)}</td><td class="cost-col"><strong>${(cumulativeCost - previousCost).toLocaleString('hu-HU')} Ft</strong><span class="breakdown-text">${detail}</span></td><td class="del-col"><button class="del-btn" onclick="deleteBoilerReading(${index})">🗑️</button></td></tr>`;
+        const intervalCost = cumulativeCost - previousCost;
+        const dateLabel = fmtDateHu(new Date(row.date + 'T00:00:00'));
+        body.innerHTML += `<tr><td>${dateLabel}</td><td style="text-align:right">${row.value.toLocaleString('hu-HU')} kWh</td><td style="text-align:right">${intervalUse === null ? '–' : fmtKwh(intervalUse)}</td><td class="cost-col"><strong>${intervalCost.toLocaleString('hu-HU')} Ft</strong><span class="breakdown-text">${detail}</span></td><td class="del-col"><button class="del-btn" onclick="deleteBoilerReading(${index})">🗑️</button></td></tr>`;
+        mobile.innerHTML += `<article class="boiler-history-item">
+            <div class="boiler-history-top"><span class="boiler-history-date">${dateLabel}</span><button class="del-btn" onclick="deleteBoilerReading(${index})" aria-label="Leolvasás törlése">🗑️</button></div>
+            <div class="boiler-history-grid">
+                <div><span class="boiler-history-key">Óraállás</span><span class="boiler-history-value">${row.value.toLocaleString('hu-HU')} kWh</span></div>
+                <div><span class="boiler-history-key">Fogyasztás előző óta</span><span class="boiler-history-value">${intervalUse === null ? '–' : fmtKwh(intervalUse)}</span></div>
+                <div class="boiler-history-cost"><span class="boiler-history-key">Ennek a leolvasási szakasznak a becsült díja</span><strong>${intervalCost.toLocaleString('hu-HU')} Ft</strong><small>Ciklus elejétől: ${fmtKwh(row.value - cfg.baseReading)} · becsült összesen: ${cumulativeCost.toLocaleString('hu-HU')} Ft<br>${detail}</small></div>
+            </div>
+        </article>`;
     });
 }
 
@@ -1903,10 +1939,20 @@ function sharePDF() {
     const element = document.getElementById('contentToShare');
     const overlay = document.getElementById('loadingOverlay');
     const editBtn = document.getElementById('editBtn');
+    const boilerTab = document.getElementById('boilerTab');
+    const wasBoilerHidden = boilerTab.hidden;
     
     overlay.style.display = 'flex';
+    boilerTab.hidden = false;
     element.classList.add('pdf-export-mode'); 
     editBtn.style.display = 'none'; 
+
+    const restoreScreen = () => {
+        element.classList.remove('pdf-export-mode');
+        boilerTab.hidden = wasBoilerHidden;
+        editBtn.style.display = 'flex';
+        overlay.style.display = 'none';
+    };
 
     const opt = {
         margin: [5, 5, 5, 5],
@@ -1918,9 +1964,7 @@ function sharePDF() {
     };
 
     html2pdf().set(opt).from(element).outputPdf('blob').then(function(pdfBlob) {
-        element.classList.remove('pdf-export-mode');
-        editBtn.style.display = 'flex';
-        overlay.style.display = 'none';
+        restoreScreen();
 
         const file = new File([pdfBlob], opt.filename, { type: "application/pdf" });
 
@@ -1930,6 +1974,9 @@ function sharePDF() {
             const url = URL.createObjectURL(pdfBlob);
             const a = document.createElement('a'); a.href = url; a.download = opt.filename; a.click();
         }
+    }).catch(function() {
+        restoreScreen();
+        alert('A PDF most nem készült el. Próbáld meg még egyszer.');
     });
 }
 
