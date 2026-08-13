@@ -436,10 +436,31 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode .realtime-meter { display: none !important; }
 .pdf-export-mode .coach-panel, .pdf-export-mode .help-btn { display: none !important; }
 .pdf-export-mode .tab-switcher { display: none !important; }
-.pdf-export-mode #boilerTab { display: block !important; }
+.pdf-export-mode #boilerTab { display: block !important; break-before: page !important; page-break-before: always !important; color: #111827 !important; }
 .pdf-export-mode .boiler-action { display: none !important; }
 .pdf-export-mode .boiler-table-wrap { display: block !important; overflow: visible !important; }
 .pdf-export-mode .boiler-history-mobile { display: none !important; }
+.pdf-export-mode #boilerTab .card { color: #111827 !important; page-break-inside: avoid !important; }
+.pdf-export-mode #boilerTab .card-title,
+.pdf-export-mode #boilerTab .title-left,
+.pdf-export-mode #boilerTab .quota-sub,
+.pdf-export-mode #boilerTab .boiler-field label,
+.pdf-export-mode #boilerTab .mvm-stat-row span { color: #111827 !important; }
+.pdf-export-mode #boilerTab .boiler-summary { background: #f8fafc !important; border: 2px solid #334155 !important; color: #111827 !important; }
+.pdf-export-mode #boilerTab .boiler-total,
+.pdf-export-mode #boilerTab .mvm-stat-row strong,
+.pdf-export-mode #boilerTab .stat-main { color: #111827 !important; text-shadow: none !important; }
+.pdf-export-mode #boilerTab .boiler-note { color: #334155 !important; font-size: 0.82rem !important; }
+.pdf-export-mode #boilerTab .stat-box { background: #f8fafc !important; border: 1px solid #94a3b8 !important; color: #111827 !important; }
+.pdf-export-mode #boilerTab .stat-box strong,
+.pdf-export-mode #boilerTab #boilerStatusText { color: #111827 !important; }
+.pdf-export-mode #boilerTab .progress-container { background: #e2e8f0 !important; border: 1px solid #94a3b8 !important; }
+.pdf-export-mode #boilerTab .progress-bar { background: #2563eb !important; }
+.pdf-export-mode #boilerTab .time-marker { border-color: #111827 !important; }
+.pdf-export-mode #boilerTab .marker-label { color: #111827 !important; background: #fff !important; }
+.pdf-export-mode #boilerTab input { background: #fff !important; border: 1px solid #64748b !important; color: #111827 !important; -webkit-text-fill-color: #111827 !important; }
+.pdf-export-mode #boilerTab .breakdown-text,
+.pdf-export-mode #boilerTab .breakdown-over { color: #334155 !important; }
 
 </style>
 </head>
