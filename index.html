@@ -114,6 +114,9 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .boiler-summary { background: linear-gradient(145deg, rgba(16,185,129,0.13), rgba(15,23,42,0.75)); border: 1px solid rgba(16,185,129,0.65); border-radius: 15px; padding: 15px; margin-bottom: 16px; }
 .boiler-total { font-size: 1.7rem; font-weight: 900; color: #f8fafc; }
 .boiler-note { color: var(--dim); font-size: 0.74rem; line-height: 1.45; margin-top: 7px; }
+.boiler-finance { margin-top: 12px; padding-top: 11px; border-top: 1px solid rgba(16,185,129,0.28); }
+.boiler-finance-total { margin-top: 3px; color: #f8fafc; font-size: 1.02rem; font-weight: 900; }
+.boiler-finance-note { margin-top: 4px; color: #a7f3d0; font-size: 0.72rem; line-height: 1.4; }
 .boiler-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .boiler-form .full { grid-column: 1 / -1; }
 .boiler-field { min-width: 0; display: flex; flex-direction: column; }
@@ -121,7 +124,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .boiler-field input { width: 100%; min-width: 0; padding: 11px; border-radius: 9px; border: 1px solid var(--border); background: rgba(0,0,0,0.22); color: white; box-sizing: border-box; font: inherit; font-weight: 800; }
 .boiler-action { width: 100%; margin-top: 13px; padding: 12px; border-radius: 9px; border: 1px solid rgba(16,185,129,0.65); background: rgba(16,185,129,0.13); color: #a7f3d0; font-weight: 900; cursor: pointer; }
 .boiler-action.secondary { border-color: var(--border); background: rgba(255,255,255,0.05); color: var(--text); }
-.boiler-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.boiler-table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .boiler-table-wrap table { min-width: 560px; }
 .boiler-history-mobile { display: none; }
 
@@ -159,6 +162,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
     .boiler-history-cost { grid-column: 1 / -1; padding-top: 9px; border-top: 1px solid rgba(148,163,184,0.18); }
     .boiler-history-cost strong { color: #93c5fd; font-size: 1rem; }
     .boiler-history-cost small { display: block; color: var(--dim); font-size: 0.7rem; line-height: 1.4; margin-top: 4px; }
+    #boilerTab, #boilerTab .card, #boilerTab .boiler-summary, #boilerTab .boiler-form { max-width: 100%; box-sizing: border-box; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
@@ -449,8 +453,11 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode #boilerTab .boiler-summary { background: #f8fafc !important; border: 2px solid #334155 !important; color: #111827 !important; }
 .pdf-export-mode #boilerTab .boiler-total,
 .pdf-export-mode #boilerTab .mvm-stat-row strong,
-.pdf-export-mode #boilerTab .stat-main { color: #111827 !important; text-shadow: none !important; }
+.pdf-export-mode #boilerTab .stat-main,
+.pdf-export-mode #boilerTab .boiler-finance-total { color: #111827 !important; text-shadow: none !important; }
 .pdf-export-mode #boilerTab .boiler-note { color: #334155 !important; font-size: 0.82rem !important; }
+.pdf-export-mode #boilerTab .boiler-finance { border-top-color: #94a3b8 !important; }
+.pdf-export-mode #boilerTab .boiler-finance-note { color: #334155 !important; font-size: 0.76rem !important; }
 .pdf-export-mode #boilerTab .stat-box { background: #f8fafc !important; border: 1px solid #94a3b8 !important; color: #111827 !important; }
 .pdf-export-mode #boilerTab .stat-box strong,
 .pdf-export-mode #boilerTab #boilerStatusText { color: #111827 !important; }
@@ -461,6 +468,14 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode #boilerTab input { background: #fff !important; border: 1px solid #64748b !important; color: #111827 !important; -webkit-text-fill-color: #111827 !important; }
 .pdf-export-mode #boilerTab .breakdown-text,
 .pdf-export-mode #boilerTab .breakdown-over { color: #334155 !important; }
+.pdf-export-mode #boilerTab .boiler-table-wrap { width: 100% !important; max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important; }
+.pdf-export-mode #boilerTab .boiler-table-wrap table { width: 100% !important; min-width: 0 !important; max-width: 100% !important; table-layout: fixed !important; }
+.pdf-export-mode #boilerTab .boiler-table-wrap th,
+.pdf-export-mode #boilerTab .boiler-table-wrap td { padding: 6px 4px !important; font-size: 0.72rem !important; white-space: normal !important; overflow-wrap: anywhere !important; word-break: normal !important; }
+.pdf-export-mode #boilerTab .boiler-table-wrap th:nth-child(1), .pdf-export-mode #boilerTab .boiler-table-wrap td:nth-child(1) { width: 19% !important; }
+.pdf-export-mode #boilerTab .boiler-table-wrap th:nth-child(2), .pdf-export-mode #boilerTab .boiler-table-wrap td:nth-child(2) { width: 17% !important; }
+.pdf-export-mode #boilerTab .boiler-table-wrap th:nth-child(3), .pdf-export-mode #boilerTab .boiler-table-wrap td:nth-child(3) { width: 18% !important; }
+.pdf-export-mode #boilerTab .boiler-table-wrap th:nth-child(4), .pdf-export-mode #boilerTab .boiler-table-wrap td:nth-child(4) { width: 42% !important; }
 
 </style>
 </head>
@@ -686,6 +701,11 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
                 <div class="quota-sub">Eddigi fogyasztás / éves terv</div>
                 <div class="boiler-total" id="boilerUsedDisp">–</div>
                 <div class="boiler-note" id="boilerSummaryNote">Add meg a ciklus nyitó óraállását és az első leolvasást. A B alap vezérelt tarifát külön mérőként számolja.</div>
+                <div class="boiler-finance">
+                    <div class="quota-sub">Becsült költség / éves terv szerinti költség</div>
+                    <div class="boiler-finance-total" id="boilerFinanceDisp">–</div>
+                    <div class="boiler-finance-note" id="boilerFinanceNote">A pénzügyi összevetéshez előbb kell egy nyitó és egy aktuális óraállás.</div>
+                </div>
             </div>
             <div class="progress-container">
                 <div class="time-marker" id="boilerTimeMarker" style="left:0%"><div class="marker-label" id="boilerMarkerLabel">MA</div></div>
@@ -1629,6 +1649,8 @@ function updateBoilerView() {
     const liveCalc = document.getElementById('boilerLiveCalc');
     const liveCons = document.getElementById('boilerLiveCons');
     const liveCost = document.getElementById('boilerLiveCost');
+    const financeDisp = document.getElementById('boilerFinanceDisp');
+    const financeNote = document.getElementById('boilerFinanceNote');
     const plan = cfg.annualPlan || BOILER_DISCOUNT_LIMIT;
 
     if (cfg.baseReading === null || !latest || latest.value < cfg.baseReading) {
@@ -1637,6 +1659,8 @@ function updateBoilerView() {
         liveCalc.innerText = 'Írd be a dátumot és az aktuálisan látott óraállást. Ezt bármikor elmentheted, nem kell hónap végének lennie.';
         liveCons.innerText = '0,000 kWh';
         liveCost.innerText = '0 Ft';
+        financeDisp.innerText = '–';
+        financeNote.innerText = 'A pénzügyi összevetéshez előbb kell egy nyitó és egy aktuális óraállás.';
         setBoilerProgress(0, 0, plan, 0, false);
         renderBoilerHistory();
         return;
@@ -1653,11 +1677,17 @@ function updateBoilerView() {
     const diff = used - expected;
     const daily = daysPassed > 0 ? used / daysPassed : 0;
     const predicted = daily * totalDays;
+    const annualPlanCost = calculateBoilerCost(plan, cfg.startDate, formatLocalDate(cycleEnd)).total;
+    const plannedCostToDate = calculateBoilerCost(expected, cfg.startDate, latest.date).total;
+    const predictedAnnualCost = calculateBoilerCost(predicted, cfg.startDate, formatLocalDate(cycleEnd)).total;
+    const financialDiff = cost.total - plannedCostToDate;
     const nowLabel = fmtDateHu(reference);
     usedDisp.innerText = `${Math.round(used).toLocaleString('hu-HU')} / ${Math.round(plan).toLocaleString('hu-HU')} kWh`;
     summary.innerText = `${nowLabel}-i állás alapján becsült eddigi B alap költség: ${cost.total.toLocaleString('hu-HU')} Ft. Ebből ${Math.round(cost.discountPart).toLocaleString('hu-HU')} kWh kedvezményes, ${Math.round(cost.marketPart).toLocaleString('hu-HU')} kWh piaci sáv.`;
     liveCons.innerText = fmtKwh(used);
     liveCost.innerText = `${cost.total.toLocaleString('hu-HU')} Ft`;
+    financeDisp.innerText = `${cost.total.toLocaleString('hu-HU')} / ${annualPlanCost.toLocaleString('hu-HU')} Ft`;
+    financeNote.innerText = `Időarányosan a terv szerint most kb. ${plannedCostToDate.toLocaleString('hu-HU')} Ft-nál tartanál: ettől ${Math.abs(financialDiff).toLocaleString('hu-HU')} Ft-tal ${financialDiff > 0 ? 'magasabban' : financialDiff < 0 ? 'kedvezőbben' : 'pontosan ugyanott'} állsz. Ha ez a tempó marad, év végére kb. ${predictedAnnualCost.toLocaleString('hu-HU')} Ft várható. Ez tarifa szerinti becslés, nem a befizetett átalány összege.`;
     liveCalc.innerText = `Az aktuális leolvasás a nyitóhoz képest ${fmtKwh(used)}. Kedvezményes keret: ${Math.round(cost.limit).toLocaleString('hu-HU')} kWh erre az időszakra. Ha most rögzíted, bekerül az előzményekbe, és ez lesz a következő összehasonlítás alapja.`;
     setBoilerProgress(used, expected, plan, daysPassed / totalDays, diff > 0);
     renderBoilerHistory();
