@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -250,13 +249,14 @@ input[type="date"] { color-scheme: dark; font-family: 'Inter', sans-serif; text-
 
 /* MVM INPUT RENDSZER */
 .mvm-mini { 
-    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; 
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 15px; 
     background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px; 
 }
-.mvm-field { display: flex; flex-direction: column; }
+.mvm-mini > *, .mvm-field { min-width: 0; }
+.mvm-field { display: flex; flex-direction: column; gap: 0; }
 .mvm-field label { font-size: 0.7rem; color: var(--dim); margin-bottom: 5px; text-transform:uppercase; font-weight:bold;}
 .mvm-field input { 
-    width: 100%; background: transparent; border: 1px solid var(--border); 
+    width: 100%; min-width: 0; background: transparent; border: 1px solid var(--border); 
     color: white; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; 
 }
 .mvm-field input[readonly] { color: #bfdbfe; background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.45); }
@@ -605,7 +605,8 @@ document.getElementById('currentMonthDate').innerText = currentMonthStr;
 
 function refreshPage(button) {
     button.classList.add('is-spinning');
-    setTimeout(() => location.reload(), 420);
+    // Két képkockát várunk, hogy a forgás biztosan látható legyen újratöltés előtt.
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => location.reload(), 620)));
 }
 
 // --- DINAMIKUS TÉTELEK ---
