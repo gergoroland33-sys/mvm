@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -81,6 +82,16 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .status-good { color: var(--success); }
 .status-bad { color: var(--danger); }
 .status-neutral { color: var(--dim); }
+
+/* Csak képernyős, ideiglenes aktuális leolvasás */
+.realtime-meter { margin-top: 16px; padding: 13px; border: 1px solid rgba(59,130,246,0.55); border-radius: 12px; background: rgba(59,130,246,0.08); }
+.realtime-meter-title { font-size: 0.76rem; font-weight: 800; color: #93c5fd; text-transform: uppercase; margin-bottom: 5px; }
+.realtime-meter-note { font-size: 0.7rem; color: var(--dim); line-height: 1.35; margin-bottom: 10px; }
+.realtime-meter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.realtime-meter label { display: block; font-size: 0.66rem; color: var(--dim); margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
+.realtime-meter input { width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.22); color: var(--text); font-weight: 800; }
+.realtime-result { margin-top: 10px; font-size: 0.76rem; color: var(--dim); line-height: 1.45; }
+.realtime-result strong { color: white; font-size: 0.95rem; }
 
 /* VILLANY & EGYÉB INPUTOK */
 .edit-btn {
@@ -307,6 +318,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode th:last-child, .pdf-export-mode td:last-child { border: none !important; width: 0 !important; padding: 0 !important; } 
 .pdf-export-mode .edit-btn, .pdf-export-mode .fab-group, .pdf-export-mode .refresh-btn, .pdf-export-mode .mvm-mini { display: none !important; } 
 .pdf-export-mode #addExpenseBtn, .pdf-export-mode .del-item-btn { display: none !important; }
+.pdf-export-mode .realtime-meter { display: none !important; }
 
 </style>
 </head>
@@ -366,6 +378,22 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
         </div>
         <div style="text-align:center; font-size:0.65rem; color:var(--dim); margin-top:8px;">
             A mutató az éves kerethez viszonyít. Ha a csík elhagyja a fehér jelölőt (MA), túlfogyasztásban vagy.
+        </div>
+
+        <div class="realtime-meter">
+            <div class="realtime-meter-title">⚡ Aktuális leolvasás - gyors ellenőrzés</div>
+            <div class="realtime-meter-note">Írd be, mennyit fogyasztottál az utolsó rögzített záró óraállás óta. Ez az éves mutatót azonnal frissíti, de semmit nem ment és nem kerül a PDF-be.</div>
+            <div class="realtime-meter-grid">
+                <div>
+                    <label for="realtimeDate">Leolvasás dátuma</label>
+                    <input type="date" id="realtimeDate" oninput="updateTable()">
+                </div>
+                <div>
+                    <label for="realtimeUsed">Azóta fogyasztott (kWh)</label>
+                    <input type="text" inputmode="decimal" id="realtimeUsed" placeholder="pl. 125,4" oninput="updateTable()">
+                </div>
+            </div>
+            <div class="realtime-result" id="realtimeResult">Adj meg dátumot és fogyasztást az aktuális ellenőrzéshez.</div>
         </div>
     </div>
 
@@ -458,7 +486,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
         <div class="mvm-mini">
             <div class="mvm-field" style="grid-column: span 2">
                 <label>Elszámolt Hónap</label>
-                <input type="month" id="billMonth" onchange="updateTable()">
+                <input type="month" id="billMonth" onchange="onBillMonthChange()">
             </div>
             
             <div class="mvm-field">
@@ -520,8 +548,6 @@ const ANNUAL_LIMIT_KWH = 2523;
 
 const NET_PRICE_A1_RES = 4.94;   
 const NET_PRICE_A1_MKT = 31.8;   
-const NET_RHD_TRANS = 4.84;      
-const NET_RHD_DIST = 18.56;      
 const NET_FIXED_FEE = 120.5;     
 const VAT = 1.27;                
 
@@ -675,7 +701,13 @@ function getMonthRange(monthInputValue) {
     return { start, end, display, days: lastDay };
 }
 
-function calculateMVM(cons, daysInMonth) {
+function getNetworkRates(startDate) {
+    // A feltöltött MVM elszámoló alapján: 2025.12-ben 4,84 + 18,56; 2026.01-től 3,39 + 20,01 Ft/kWh nettó.
+    if (startDate && startDate >= '2026-01-01') return { transmission: 3.39, distribution: 20.01 };
+    return { transmission: 4.84, distribution: 18.56 };
+}
+
+function calculateMVM(cons, daysInMonth, startDate = null) {
     const monthlyLimit = Math.round((ANNUAL_LIMIT_KWH / 365) * daysInMonth);
     let res = 0; 
     let mkt = 0; 
@@ -686,7 +718,8 @@ function calculateMVM(cons, daysInMonth) {
         mkt = cons - monthlyLimit;
     }
     const energyCostNet = (res * NET_PRICE_A1_RES) + (mkt * NET_PRICE_A1_MKT);
-    const rhdVarNet = cons * (NET_RHD_TRANS + NET_RHD_DIST);
+    const rates = getNetworkRates(startDate);
+    const rhdVarNet = cons * (rates.transmission + rates.distribution);
     const rhdFixNet = NET_FIXED_FEE;
     const totalNet = energyCostNet + rhdVarNet + rhdFixNet;
     const totalGross = totalNet * VAT;
@@ -695,7 +728,8 @@ function calculateMVM(cons, daysInMonth) {
         totalGross: Math.round(totalGross),
         resPart: res,
         mktPart: mkt,
-        monthlyLimit: monthlyLimit
+        monthlyLimit: monthlyLimit,
+        rates: rates
     };
 }
 
@@ -717,10 +751,10 @@ function getCycleConfig() {
         return cfg;
     }
 
-    // Alap: aktuális rezsi-év kezdete (Szept 1) kiindulásnak, üres óraállással, SZERKESZTHETŐ
+    // Alap: MVM kedvezményes év kezdete (augusztus 1.), üres óraállással, szerkeszthetően
     const today = new Date();
-    let sy = today.getMonth() >= 8 ? today.getFullYear() : today.getFullYear() - 1;
-    cfg = { startDate: `${sy}-09-01`, baseValue: null, quota: YEARLY_QUOTA, locked: false };
+    let sy = today.getMonth() >= 7 ? today.getFullYear() : today.getFullYear() - 1;
+    cfg = { startDate: `${sy}-08-01`, baseValue: null, quota: YEARLY_QUOTA, locked: false };
     localStorage.setItem('cycle_config_v1', JSON.stringify(cfg));
     return cfg;
 }
@@ -1003,7 +1037,9 @@ function updateYearlyQuota(liveConsumption = 0, liveReadEnd = 0, liveEndDateStr 
     const statusHufEl = document.getElementById('qStatusHuf');
     const statusTextEl = document.getElementById('qStatusText');
 
-    const grossMktPrice = (NET_PRICE_A1_MKT + NET_RHD_TRANS + NET_RHD_DIST) * VAT;
+    const rateDate = liveEndDateStr || new Date().toISOString().substring(0, 10);
+    const currentRates = getNetworkRates(rateDate);
+    const grossMktPrice = (NET_PRICE_A1_MKT + currentRates.transmission + currentRates.distribution) * VAT;
 
     if (baseMissing) {
         statusValEl.innerText = "–";
@@ -1053,6 +1089,67 @@ function updateYearlyQuota(liveConsumption = 0, liveReadEnd = 0, liveEndDateStr 
     }
 }
 
+function getLatestRecordedReading(beforeDateStr) {
+    const before = beforeDateStr ? new Date(beforeDateStr + 'T23:59:59') : null;
+    let latest = null;
+    historyLog.forEach(entry => {
+        const end = new Date(entry.endStr + 'T00:00:00');
+        if ((!before || end <= before) && (!latest || end > new Date(latest.endStr + 'T00:00:00'))) latest = entry;
+    });
+    return latest;
+}
+
+function getRealtimePreview() {
+    const dateStr = document.getElementById('realtimeDate').value;
+    const used = cleanNumStr(document.getElementById('realtimeUsed').value);
+    if (!dateStr || isNaN(used) || used < 0) return null;
+
+    const baseEntry = getLatestRecordedReading(dateStr);
+    if (!baseEntry) return { error: 'Előbb rögzíts legalább egy havi záró óraállást; ez lesz az aktuális számolás alapja.' };
+
+    const currentReading = baseEntry.endVal + used;
+    const monthStart = `${dateStr.substring(0, 7)}-01`;
+    const previousDay = new Date(monthStart + 'T00:00:00');
+    previousDay.setDate(previousDay.getDate() - 1);
+    const expectedOpeningDate = previousDay.toISOString().substring(0, 10);
+    const openingEntry = getLatestRecordedReading(expectedOpeningDate);
+    const monthOpening = openingEntry && openingEntry.endStr === expectedOpeningDate ? openingEntry.endVal : null;
+    const monthConsumption = monthOpening === null ? null : Math.max(0, currentReading - monthOpening);
+    return { dateStr, baseEntry, currentReading, monthConsumption };
+}
+
+function updateRealtimePreview() {
+    const resultEl = document.getElementById('realtimeResult');
+    const preview = getRealtimePreview();
+    if (!preview) {
+        resultEl.innerText = 'Adj meg dátumot és fogyasztást az aktuális ellenőrzéshez.';
+        return null;
+    }
+    if (preview.error) {
+        resultEl.innerText = preview.error;
+        return preview;
+    }
+
+    const monthlyText = preview.monthConsumption === null
+        ? 'A havi értékhez rögzítsd az előző hónap utolsó napi záró állását.'
+        : `Aktuális havi fogyasztás: <strong>${fmtKwh(preview.monthConsumption)}</strong>`;
+    resultEl.innerHTML = `Kiinduló záró állás: ${preview.baseEntry.endVal.toLocaleString('hu-HU')} kWh (${preview.baseEntry.endStr})<br>Számított jelenlegi óraállás: <strong>${preview.currentReading.toLocaleString('hu-HU')} kWh</strong><br>${monthlyText}`;
+    return preview;
+}
+
+function onBillMonthChange() {
+    const month = document.getElementById('billMonth').value;
+    if (!month) { updateTable(); return; }
+    const start = `${month}-01`;
+    const previousDay = new Date(start + 'T00:00:00');
+    previousDay.setDate(previousDay.getDate() - 1);
+    const previous = getLatestRecordedReading(previousDay.toISOString().substring(0, 10));
+    if (previous && previous.endStr === previousDay.toISOString().substring(0, 10)) {
+        document.getElementById('readStart').value = meterToInput(previous.endVal);
+    }
+    updateTable();
+}
+
 function deleteEntry(originalIndex) {
     if(!confirm("Biztosan törlöd ezt az időszakot?")) return;
     historyLog.splice(originalIndex, 1);
@@ -1077,7 +1174,7 @@ function updateTable() {
 
     if(readEnd > readStart) {
         liveCons = readEnd - readStart;
-        const result = calculateMVM(liveCons, range.days);
+        const result = calculateMVM(liveCons, range.days, range.start);
         liveCost = result.totalGross;
         const limit = result.monthlyLimit;
 
@@ -1095,12 +1192,15 @@ function updateTable() {
     document.getElementById('mvmCostDisp').innerText = formatMoney(liveCost);
     document.getElementById('mvmSplitDetail').innerHTML = hasLiveInput ? detailText : "..."; 
 
-    // Ciklus-tudatos éves keret frissítés: élő óraállás + hónap vége átadva
-    updateYearlyQuota(liveCons, readEnd, range.end);
+    // Az ideiglenes aktuális leolvasás felülírja a tervezett havi zárót a felső éves mutatóban.
+    const realtime = updateRealtimePreview();
+    const annualReadEnd = realtime && !realtime.error ? realtime.currentReading : readEnd;
+    const annualEndDate = realtime && !realtime.error ? realtime.dateStr : range.end;
+    updateYearlyQuota(liveCons, annualReadEnd, annualEndDate);
 
     if(hasLiveInput) {
         let tableBreakdown = "";
-        const liveRes = calculateMVM(liveCons, range.days);
+        const liveRes = calculateMVM(liveCons, range.days, range.start);
         
         if(liveRes.mktPart <= 0) {
              tableBreakdown = `<span class="breakdown-text breakdown-split">Rezsi: ${formatMoney(liveCost)}</span>`;
@@ -1133,7 +1233,7 @@ function updateTable() {
 
     historyWithIndex.forEach(row => {
         const rowRange = getMonthRange(row.startStr.substring(0, 7)); 
-        const recalc = calculateMVM(row.cons, rowRange.days); 
+        const recalc = calculateMVM(row.cons, rowRange.days, rowRange.start); 
 
         let cDetail = fmtKwh(row.cons);
         if(recalc.mktPart > 0) {
@@ -1164,7 +1264,7 @@ function updateTable() {
             </td>
             <td class="cons-col">${cDetail}</td>
             <td class="cost-col">
-                ${Math.round(row.cost).toLocaleString()} Ft
+                ${Math.round(recalc.totalGross).toLocaleString('hu-HU')} Ft
                 ${breakdownHtml}
             </td>
             <td class="del-col">
@@ -1193,7 +1293,7 @@ function save() {
     const range = getMonthRange(monthInput);
     const cons = readEnd - readStart;
     
-    const result = calculateMVM(cons, range.days);
+    const result = calculateMVM(cons, range.days, range.start);
     const cost = result.totalGross;
     const momPays = calc();
 
@@ -1252,6 +1352,14 @@ function sharePDF() {
 }
 
 // INICIALIZÁLÁS
+function setRealtimeDateDefault() {
+    const field = document.getElementById('realtimeDate');
+    if (field.value) return;
+    const t = new Date();
+    field.value = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+}
+
+setRealtimeDateDefault();
 renderExpenseList();
 loadCycleConfigToUI();
 renderCycleInfo();
