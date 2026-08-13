@@ -112,6 +112,21 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
     .realtime-meter input { min-width: 0; font-size: 16px; }
     .realtime-result { overflow-wrap: anywhere; }
     .coach-text { overflow-wrap: anywhere; }
+    .card { padding: 16px; overflow: hidden; }
+    .quota-header { gap: 8px; }
+    .quota-header > div { min-width: 0; }
+    .quota-val-big { font-size: 1.35rem; }
+    .quota-stats { gap: 4px; }
+    .stat-box { min-width: 0; padding: 8px 4px; overflow-wrap: anywhere; }
+    .stat-box strong { font-size: 0.8rem; }
+    .cycle-info-row { min-width: 0; }
+    .ci-val { min-width: 0; overflow-wrap: anywhere; }
+    .mvm-mini { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px; }
+    .mvm-field[style] { grid-column: span 1 !important; }
+    .mvm-stat-container { grid-column: span 1; }
+    .mvm-field input { min-width: 0; font-size: 16px; }
+    .fab-group { gap: 8px; padding: 0 10px; }
+    .btn { min-width: 0; padding: 11px 14px; font-size: 0.8rem; }
 }
 
 /* VILLANY & EGYÉB INPUTOK */
@@ -733,6 +748,17 @@ function formatLocalDate(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+function formatMonthHu(dateOrStr) {
+    const date = dateOrStr instanceof Date ? dateOrStr : new Date(`${dateOrStr}T00:00:00`);
+    if (isNaN(date)) return 'ismeretlen időszak';
+    return `${date.getFullYear()}. ${monthNames[date.getMonth()].charAt(0) + monthNames[date.getMonth()].slice(1).toLowerCase()}`;
+}
+
+function estimateGrossMarketAmount(kwh, dateStr) {
+    const rates = getNetworkRates(dateStr);
+    return Math.round(kwh * (NET_PRICE_A1_MKT + rates.transmission + rates.distribution) * VAT);
+}
+
 function getMonthRange(monthInputValue) {
     if(!monthInputValue) return { start: null, end: null, display: "...", days: 30 };
     const [year, month] = monthInputValue.split('-').map(Number);
@@ -1214,15 +1240,21 @@ function buildCoachText() {
 
     let pace;
     if (diff <= 0) {
-        pace = `Eddig ${Math.round(info.totalUsed).toLocaleString('hu-HU')} kWh fogyott. Az időarányos célhoz képest ${Math.round(Math.abs(diff)).toLocaleString('hu-HU')} kWh tartalékod van.`;
+        const value = estimateGrossMarketAmount(Math.abs(diff), formatLocalDate(info.referenceDate));
+        pace = `Eddig ${Math.round(info.totalUsed).toLocaleString('hu-HU')} kWh fogyott. Az időarányos célhoz képest ${Math.round(Math.abs(diff)).toLocaleString('hu-HU')} kWh tartalékod van; ez piaci sávban kb. ${value.toLocaleString('hu-HU')} Ft-nyi mozgásteret jelent.`;
     } else {
-        pace = `Eddig ${Math.round(info.totalUsed).toLocaleString('hu-HU')} kWh fogyott, ami ${Math.round(diff).toLocaleString('hu-HU')} kWh-val az időarányos cél fölött van.`;
+        const value = estimateGrossMarketAmount(diff, formatLocalDate(info.referenceDate));
+        pace = `Eddig ${Math.round(info.totalUsed).toLocaleString('hu-HU')} kWh fogyott, ami ${Math.round(diff).toLocaleString('hu-HU')} kWh-val az időarányos cél fölött van. Piaci sávban ez most kb. ${value.toLocaleString('hu-HU')} Ft-nyi kockázati nagyságrend.`;
     }
 
     const dailyLine = daysLeft > 0
         ? `A hátralévő ${Math.round(daysLeft)} napban átlagosan legfeljebb ${allowedDaily.toFixed(1).replace('.', ',')} kWh/nap fér bele. A mostani átlagod ${dailyAverage.toFixed(1).replace('.', ',')} kWh/nap.`
         : 'Ez a ciklus lezárult; a következő éves ciklushoz indíts új ciklust az aktuális óraállással.';
-    const forecast = `Ha ugyanígy folytatod, a ciklus végére kb. ${Math.round(projected).toLocaleString('hu-HU')} kWh várható (${Math.round(projected - info.quota).toLocaleString('hu-HU')} kWh eltérés a tervhez képest).`;
+    const projectedDiff = projected - info.quota;
+    const estimatedMoney = estimateGrossMarketAmount(Math.abs(projectedDiff), formatLocalDate(info.referenceDate));
+    const forecast = projectedDiff > 0
+        ? `Ha ugyanígy folytatod, a ciklus végére kb. ${Math.round(projected).toLocaleString('hu-HU')} kWh várható: ez ${Math.round(projectedDiff).toLocaleString('hu-HU')} kWh-val több a tervnél. Ennek a magasabb, piaci sávban számolt nagyságrendje körülbelül ${estimatedMoney.toLocaleString('hu-HU')} Ft lehet.`
+        : `Ha ugyanígy folytatod, a ciklus végére kb. ${Math.round(projected).toLocaleString('hu-HU')} kWh várható: ez ${Math.round(Math.abs(projectedDiff)).toLocaleString('hu-HU')} kWh tartalékot jelenthet. Piaci sávban számolva ez hozzávetőleg ${estimatedMoney.toLocaleString('hu-HU')} Ft-nyi elkerült többletköltség.`;
 
     let tip;
     if (projected > info.quota * 1.03) {
@@ -1242,20 +1274,23 @@ function buildPreviousCycleCoachText(defaultQuota) {
     if (lastCycle && lastCycle.consumption !== null && lastCycle.consumption !== undefined) {
         const quota = lastCycle.quota || defaultQuota;
         const diff = lastCycle.consumption - quota;
-        const period = `${lastCycle.startDate} – ${lastCycle.endDate}`;
+        const period = `${fmtDateHu(new Date(lastCycle.startDate + 'T00:00:00'))} – ${fmtDateHu(new Date(lastCycle.endDate + 'T00:00:00'))}`;
+        const value = estimateGrossMarketAmount(Math.abs(diff), lastCycle.endDate);
         const verdict = diff <= 0
-            ? `Szép munka: ${Math.round(Math.abs(diff)).toLocaleString('hu-HU')} kWh tartalékkal zártad a keretet.`
-            : `Ez a ciklus ${Math.round(diff).toLocaleString('hu-HU')} kWh-val a terv fölött zárt, de ebből jól lehet tanulni.`;
-        return `Új éves ciklus indult, ezért még nincs friss fogyasztásod. Addig is nézzük az előző időszakot (${period}).\n\nAz előző ciklus fogyasztása ${Math.round(lastCycle.consumption).toLocaleString('hu-HU')} kWh volt a ${Math.round(quota).toLocaleString('hu-HU')} kWh-s terv mellett. ${verdict}\n\nA legjobb kezdés most az, ha az első hónap végén rögzíted a záró óraállást, és néha a realtime mezőben is ránézel a tempóra. Így korán észre fogod venni, ha megint gyorsul a fogyasztás.`;
+            ? `Szép munka: ${Math.round(Math.abs(diff)).toLocaleString('hu-HU')} kWh tartalékkal zártad a keretet. Piaci áras nagyságrendben ez kb. ${value.toLocaleString('hu-HU')} Ft elkerült többletet jelent.`
+            : `Ez a ciklus ${Math.round(diff).toLocaleString('hu-HU')} kWh-val a terv fölött zárt; a piaci sávban ez kb. ${value.toLocaleString('hu-HU')} Ft nagyságrendű pluszköltséget jelenthetett.`;
+        return `Új éves ciklus indult, ezért még nincs friss fogyasztásod. Addig is nézzük az előző időszakot (${period}).\n\nAz előző ciklus fogyasztása ${Math.round(lastCycle.consumption).toLocaleString('hu-HU')} kWh volt a ${Math.round(quota).toLocaleString('hu-HU')} kWh-s terv mellett. ${verdict}\n\nMost nem kell kapkodni: az első hónap végén rögzítsd a záró óraállást, közben pedig néha pillants rá a realtime mezőre. Így jóval korábban látszik majd, ha a fogyasztás megint gyorsulni kezd.`;
     }
 
     if (historyLog.length) {
         const rows = [...historyLog].sort((a, b) => new Date(a.startStr) - new Date(b.startStr));
         const total = rows.reduce((sum, row) => sum + (Number(row.cons) || 0), 0);
         const maxRow = rows.reduce((max, row) => (!max || row.cons > max.cons ? row : max), null);
-        const first = rows[0].startStr;
-        const last = rows[rows.length - 1].endStr;
-        return `Új ciklus indult, ezért most még nincs friss fogyasztási adat. A korábbi rögzítéseidből viszont van tanulság.\n\n${first} és ${last} között összesen ${Math.round(total).toLocaleString('hu-HU')} kWh-t rögzítettél. A legerősebb időszak a ${maxRow.startStr.substring(0, 7)} volt, ${Math.round(maxRow.cons).toLocaleString('hu-HU')} kWh-val.\n\nIndíts nyugodtan: az első záró óraállás rögzítése után már személyre szabottan mutatom majd, hogy a mostani éves kerethez képest jó vagy rossz irányba indultál-e.`;
+        const first = fmtDateHu(new Date(rows[0].startStr + 'T00:00:00'));
+        const last = fmtDateHu(new Date(rows[rows.length - 1].endStr + 'T00:00:00'));
+        const maxMonth = formatMonthHu(maxRow.startStr);
+        const approxValue = estimateGrossMarketAmount(total, rows[rows.length - 1].endStr);
+        return `Új ciklus indult, ezért most még nincs friss fogyasztási adat. A korábbi rögzítéseidből viszont van tanulság.\n\n${first} és ${last} között összesen ${Math.round(total).toLocaleString('hu-HU')} kWh-t rögzítettél. A legerősebb időszak ${maxMonth} volt, ${Math.round(maxRow.cons).toLocaleString('hu-HU')} kWh-val. A teljes rögzített fogyasztás piaci sávval számolt felső nagyságrendje kb. ${approxValue.toLocaleString('hu-HU')} Ft lenne; a valós számla természetesen ennél kedvezőbb lehet a rezsicsökkentett mennyiség miatt.\n\nIndíts nyugodtan: az első záró óraállás rögzítése után már személyre szabottan mutatom majd, hogy a mostani éves kerethez képest jó vagy rossz irányba indultál-e.`;
     }
 
     return 'Új ciklus indult, ezért ez teljesen normális, hogy még nincs fogyasztási adat. Add meg az első havi záró óraállást, utána már nemcsak számolok, hanem el is mondom közérthetően, hogyan állsz az éves kerethez képest.';
