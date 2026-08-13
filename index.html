@@ -93,6 +93,13 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .realtime-result { margin-top: 10px; font-size: 0.76rem; color: var(--dim); line-height: 1.45; }
 .realtime-result strong { color: white; font-size: 0.95rem; }
 
+@media (max-width: 520px) {
+    .realtime-meter { padding: 12px; overflow: hidden; }
+    .realtime-meter-grid { grid-template-columns: minmax(0, 1fr); gap: 11px; }
+    .realtime-meter input { min-width: 0; font-size: 16px; }
+    .realtime-result { overflow-wrap: anywhere; }
+}
+
 /* VILLANY & EGYÉB INPUTOK */
 .edit-btn {
     background: transparent; border: 1px solid var(--dim); color: var(--dim);
@@ -223,6 +230,8 @@ input[type="date"] { color-scheme: dark; font-family: 'Inter', sans-serif; text-
     width: 100%; background: transparent; border: 1px solid var(--border); 
     color: white; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; 
 }
+.mvm-field input[readonly] { color: #bfdbfe; background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.45); }
+.mvm-field-hint { min-height: 15px; margin-top: 5px; font-size: 0.65rem; color: var(--dim); line-height: 1.25; }
 input[type="month"] { color-scheme: dark; font-family: 'Inter', sans-serif; text-align: left; font-size: 0.9rem;}
 
 .mvm-stat-container {
@@ -490,8 +499,9 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             </div>
             
             <div class="mvm-field">
-                <label>Nyitó Óraállás</label>
-                <input type="text" inputmode="decimal" id="readStart" oninput="updateTable()">
+                <label id="readStartLabel">Nyitó Óraállás (automatikus)</label>
+                <input type="text" inputmode="decimal" id="readStart" readonly oninput="updateTable()">
+                <span class="mvm-field-hint" id="readStartHint">Válassz hónapot az automatikus kitöltéshez.</span>
             </div>
             <div class="mvm-field">
                 <label>Záró Óraállás</label>
@@ -1139,13 +1149,33 @@ function updateRealtimePreview() {
 
 function onBillMonthChange() {
     const month = document.getElementById('billMonth').value;
-    if (!month) { updateTable(); return; }
+    const openingInput = document.getElementById('readStart');
+    const openingLabel = document.getElementById('readStartLabel');
+    const openingHint = document.getElementById('readStartHint');
+    document.getElementById('readEnd').value = '';
+
+    if (!month) {
+        openingInput.value = '';
+        openingInput.readOnly = true;
+        openingLabel.innerText = 'Nyitó Óraállás (automatikus)';
+        openingHint.innerText = 'Válassz hónapot az automatikus kitöltéshez.';
+        updateTable();
+        return;
+    }
     const start = `${month}-01`;
     const previousDay = new Date(start + 'T00:00:00');
     previousDay.setDate(previousDay.getDate() - 1);
     const previous = getLatestRecordedReading(previousDay.toISOString().substring(0, 10));
     if (previous && previous.endStr === previousDay.toISOString().substring(0, 10)) {
-        document.getElementById('readStart').value = meterToInput(previous.endVal);
+        openingInput.value = meterToInput(previous.endVal);
+        openingInput.readOnly = true;
+        openingLabel.innerText = 'Nyitó Óraállás (automatikus)';
+        openingHint.innerText = `Az előző havi záró állásból: ${previous.endVal.toLocaleString('hu-HU')} kWh`;
+    } else {
+        openingInput.value = '';
+        openingInput.readOnly = false;
+        openingLabel.innerText = 'Nyitó Óraállás (első rögzítés)';
+        openingHint.innerText = 'Ehhez a hónaphoz nincs rögzített előző záró adat, ezért egyszer kézzel add meg a nyitó állást.';
     }
     updateTable();
 }
@@ -1309,12 +1339,13 @@ function save() {
     
     localStorage.setItem('bill_history_v1', JSON.stringify(historyLog));
     
-    document.getElementById('readStart').value = "";
-    document.getElementById('readEnd').value = "";
-    document.getElementById('billMonth').value = "";
-    
-    updateTable(); 
-    alert("Sikeres rögzítés!");
+    // A rögzített záró óraállás automatikusan a következő hónap nyitó állása lesz.
+    const nextMonth = new Date(range.start + 'T00:00:00');
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    document.getElementById('billMonth').value = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
+    document.getElementById('readEnd').value = '';
+    onBillMonthChange();
+    alert("Sikeres rögzítés! A következő hónap nyitó óraállása automatikusan betöltve.");
 }
 
 function sharePDF() {
