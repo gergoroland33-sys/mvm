@@ -442,8 +442,17 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode .tab-switcher { display: none !important; }
 .pdf-export-mode #boilerTab { display: block !important; break-before: page !important; page-break-before: always !important; color: #111827 !important; }
 .pdf-export-mode .boiler-action { display: none !important; }
-.pdf-export-mode .boiler-table-wrap { display: block !important; overflow: visible !important; }
-.pdf-export-mode .boiler-history-mobile { display: none !important; }
+.pdf-export-mode #boilerTab .boiler-table-wrap { display: none !important; }
+.pdf-export-mode #boilerTab .boiler-history-mobile { display: grid !important; gap: 8px !important; width: 100% !important; max-width: 100% !important; }
+.pdf-export-mode #boilerTab .boiler-history-item { display: block !important; box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; padding: 9px 11px !important; border: 1px solid #94a3b8 !important; border-radius: 6px !important; background: #fff !important; color: #111827 !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+.pdf-export-mode #boilerTab .boiler-history-top { display: flex !important; justify-content: space-between !important; align-items: center !important; padding-bottom: 5px !important; margin-bottom: 6px !important; border-bottom: 1px solid #cbd5e1 !important; }
+.pdf-export-mode #boilerTab .boiler-history-date { color: #111827 !important; font-size: 0.85rem !important; font-weight: 900 !important; }
+.pdf-export-mode #boilerTab .boiler-history-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 6px 12px !important; }
+.pdf-export-mode #boilerTab .boiler-history-key { display: block !important; color: #475569 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; }
+.pdf-export-mode #boilerTab .boiler-history-value { color: #111827 !important; font-size: 0.82rem !important; font-weight: 900 !important; }
+.pdf-export-mode #boilerTab .boiler-history-cost { grid-column: 1 / -1 !important; padding-top: 6px !important; border-top: 1px solid #cbd5e1 !important; }
+.pdf-export-mode #boilerTab .boiler-history-cost strong { color: #111827 !important; font-size: 0.95rem !important; }
+.pdf-export-mode #boilerTab .boiler-history-cost small { display: block !important; color: #334155 !important; font-size: 0.7rem !important; line-height: 1.35 !important; overflow-wrap: anywhere !important; }
 .pdf-export-mode #boilerTab .card { color: #111827 !important; page-break-inside: avoid !important; }
 .pdf-export-mode #boilerTab .card-title,
 .pdf-export-mode #boilerTab .title-left,
@@ -702,7 +711,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
                 <div class="boiler-total" id="boilerUsedDisp">–</div>
                 <div class="boiler-note" id="boilerSummaryNote">Add meg a ciklus nyitó óraállását és az első leolvasást. A B alap vezérelt tarifát külön mérőként számolja.</div>
                 <div class="boiler-finance">
-                    <div class="quota-sub">Becsült költség / éves terv szerinti költség</div>
+                    <div class="quota-sub">Díjszabás szerinti költség / éves terv költsége</div>
                     <div class="boiler-finance-total" id="boilerFinanceDisp">–</div>
                     <div class="boiler-finance-note" id="boilerFinanceNote">A pénzügyi összevetéshez előbb kell egy nyitó és egy aktuális óraállás.</div>
                 </div>
@@ -736,7 +745,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             </div>
             <div class="boiler-summary" style="margin-top:13px; margin-bottom:0;">
                 <div class="mvm-stat-row"><span>Fogyasztás a nyitótól:</span><strong id="boilerLiveCons">0,000 kWh</strong></div>
-                <div class="mvm-stat-row"><span>Becsült eddigi ár:</span><strong class="stat-main" id="boilerLiveCost">0 Ft</strong></div>
+                <div class="mvm-stat-row"><span>Díjszabás szerinti eddigi ár:</span><strong class="stat-main" id="boilerLiveCost">0 Ft</strong></div>
                 <div class="boiler-note" id="boilerLiveCalc">Írd be a dátumot és az aktuálisan látott óraállást. Ezt bármikor megteheted, nem kell hónap végének lennie.</div>
             </div>
             <button class="boiler-action" onclick="saveBoilerReading()">💾 Leolvasás rögzítése</button>
@@ -745,7 +754,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
         <div class="card">
             <div class="card-title"><div class="title-left"><i>📚</i> BOJLER LEOLVASÁSI ELŐZMÉNYEK</div></div>
             <div class="boiler-table-wrap"><table>
-                <thead><tr><th>Leolvasás dátuma</th><th style="text-align:right">Óraállás</th><th style="text-align:right">Fogyasztás az előző óta</th><th style="text-align:right">Részlet & becsült ár</th><th></th></tr></thead>
+                <thead><tr><th>Leolvasás dátuma</th><th style="text-align:right">Óraállás</th><th style="text-align:right">Fogyasztás az előző óta</th><th style="text-align:right">Részlet és díj</th><th></th></tr></thead>
                 <tbody id="boilerHistoryBody"></tbody>
             </table></div>
             <div class="boiler-history-mobile" id="boilerHistoryMobile"></div>
@@ -1683,11 +1692,11 @@ function updateBoilerView() {
     const financialDiff = cost.total - plannedCostToDate;
     const nowLabel = fmtDateHu(reference);
     usedDisp.innerText = `${Math.round(used).toLocaleString('hu-HU')} / ${Math.round(plan).toLocaleString('hu-HU')} kWh`;
-    summary.innerText = `${nowLabel}-i állás alapján becsült eddigi B alap költség: ${cost.total.toLocaleString('hu-HU')} Ft. Ebből ${Math.round(cost.discountPart).toLocaleString('hu-HU')} kWh kedvezményes, ${Math.round(cost.marketPart).toLocaleString('hu-HU')} kWh piaci sáv.`;
+    summary.innerText = `${nowLabel}-i állás alapján díjszabás szerint számított eddigi B alap költség: ${cost.total.toLocaleString('hu-HU')} Ft. Ebből ${Math.round(cost.discountPart).toLocaleString('hu-HU')} kWh kedvezményes, ${Math.round(cost.marketPart).toLocaleString('hu-HU')} kWh piaci sáv.`;
     liveCons.innerText = fmtKwh(used);
     liveCost.innerText = `${cost.total.toLocaleString('hu-HU')} Ft`;
     financeDisp.innerText = `${cost.total.toLocaleString('hu-HU')} / ${annualPlanCost.toLocaleString('hu-HU')} Ft`;
-    financeNote.innerText = `Időarányosan a terv szerint most kb. ${plannedCostToDate.toLocaleString('hu-HU')} Ft-nál tartanál: ettől ${Math.abs(financialDiff).toLocaleString('hu-HU')} Ft-tal ${financialDiff > 0 ? 'magasabban' : financialDiff < 0 ? 'kedvezőbben' : 'pontosan ugyanott'} állsz. Ha ez a tempó marad, év végére kb. ${predictedAnnualCost.toLocaleString('hu-HU')} Ft várható. Ez tarifa szerinti becslés, nem a befizetett átalány összege.`;
+    financeNote.innerText = `Időarányosan a terv szerint most ${plannedCostToDate.toLocaleString('hu-HU')} Ft-nál tartanál: ettől ${Math.abs(financialDiff).toLocaleString('hu-HU')} Ft-tal ${financialDiff > 0 ? 'magasabban' : financialDiff < 0 ? 'kedvezőbben' : 'pontosan ugyanott'} állsz. A már leolvasott fogyasztás összege az aktuális B alap díjszabás szerinti számítás; ha ez a tempó marad, év végére ${predictedAnnualCost.toLocaleString('hu-HU')} Ft várható. Ez nem a befizetett átalány összege.`;
     liveCalc.innerText = `Az aktuális leolvasás a nyitóhoz képest ${fmtKwh(used)}. Kedvezményes keret: ${Math.round(cost.limit).toLocaleString('hu-HU')} kWh erre az időszakra. Ha most rögzíted, bekerül az előzményekbe, és ez lesz a következő összehasonlítás alapja.`;
     setBoilerProgress(used, expected, plan, daysPassed / totalDays, diff > 0);
     renderBoilerHistory();
@@ -1768,7 +1777,7 @@ function renderBoilerHistory() {
             <div class="boiler-history-grid">
                 <div><span class="boiler-history-key">Óraállás</span><span class="boiler-history-value">${row.value.toLocaleString('hu-HU')} kWh</span></div>
                 <div><span class="boiler-history-key">Fogyasztás előző óta</span><span class="boiler-history-value">${intervalUse === null ? '–' : fmtKwh(intervalUse)}</span></div>
-                <div class="boiler-history-cost"><span class="boiler-history-key">Ennek a leolvasási szakasznak a becsült díja</span><strong>${intervalCost.toLocaleString('hu-HU')} Ft</strong><small>Ciklus elejétől: ${fmtKwh(row.value - cfg.baseReading)} · becsült összesen: ${cumulativeCost.toLocaleString('hu-HU')} Ft<br>${detail}</small></div>
+                <div class="boiler-history-cost"><span class="boiler-history-key">Ennek a leolvasási szakasznak a díjszabás szerinti díja</span><strong>${intervalCost.toLocaleString('hu-HU')} Ft</strong><small>Ciklus elejétől: ${fmtKwh(row.value - cfg.baseReading)} · díjszabás szerint összesen: ${cumulativeCost.toLocaleString('hu-HU')} Ft<br>${detail}</small></div>
             </div>
         </article>`;
     });
@@ -1987,6 +1996,8 @@ function save() {
 }
 
 function sharePDF() {
+    // A PDF előtt a bojler mentett előzményeit is frissítjük, akkor is, ha épp a nappali fül volt nyitva.
+    updateBoilerView();
     const element = document.getElementById('contentToShare');
     const overlay = document.getElementById('loadingOverlay');
     const editBtn = document.getElementById('editBtn');
