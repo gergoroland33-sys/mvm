@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -16,7 +15,7 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
     font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text);
-    margin: 0; padding: 15px; padding-bottom: 120px;
+    margin: 0; padding: 15px; padding-bottom: 120px; overflow-x: hidden;
 }
 
 /* HEADER & REFRESH */
@@ -41,6 +40,10 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
     font-family: Georgia, serif; font-size: 1.15rem; font-weight: 800; cursor: pointer;
 }
 .help-btn:active { transform: scale(0.92); background: var(--primary); color: white; }
+.tab-switcher { display: flex; gap: 8px; margin: 12px 0 0; padding: 4px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); border-radius: 12px; }
+.tab-switcher button { flex: 1; min-width: 0; padding: 9px 7px; border: 1px solid transparent; border-radius: 8px; color: var(--dim); background: transparent; font-size: 0.77rem; font-weight: 800; cursor: pointer; }
+.tab-switcher button.active { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.55); color: #dbeafe; }
+.app-tab[hidden] { display: none !important; }
 
 /* KÁRTYÁK */
 .card {
@@ -106,6 +109,20 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .coach-text { color: #e2e8f0; font-size: 0.79rem; line-height: 1.55; white-space: pre-line; }
 .coach-copy { margin-top: 12px; width: 100%; padding: 9px; border-radius: 8px; border: 1px solid rgba(167,139,250,0.55); background: rgba(255,255,255,0.06); color: #ddd6fe; font-weight: 800; cursor: pointer; }
 
+/* Bojler / B alap */
+.boiler-summary { background: linear-gradient(145deg, rgba(16,185,129,0.13), rgba(15,23,42,0.75)); border: 1px solid rgba(16,185,129,0.65); border-radius: 15px; padding: 15px; margin-bottom: 16px; }
+.boiler-total { font-size: 1.7rem; font-weight: 900; color: #f8fafc; }
+.boiler-note { color: var(--dim); font-size: 0.74rem; line-height: 1.45; margin-top: 7px; }
+.boiler-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.boiler-form .full { grid-column: 1 / -1; }
+.boiler-field { min-width: 0; display: flex; flex-direction: column; }
+.boiler-field label { color: var(--dim); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
+.boiler-field input { width: 100%; min-width: 0; padding: 11px; border-radius: 9px; border: 1px solid var(--border); background: rgba(0,0,0,0.22); color: white; box-sizing: border-box; font: inherit; font-weight: 800; }
+.boiler-action { width: 100%; margin-top: 13px; padding: 12px; border-radius: 9px; border: 1px solid rgba(16,185,129,0.65); background: rgba(16,185,129,0.13); color: #a7f3d0; font-weight: 900; cursor: pointer; }
+.boiler-action.secondary { border-color: var(--border); background: rgba(255,255,255,0.05); color: var(--text); }
+.boiler-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.boiler-table-wrap table { min-width: 560px; }
+
 @media (max-width: 520px) {
     .realtime-meter { padding: 12px; overflow: hidden; }
     .realtime-meter-grid { grid-template-columns: minmax(0, 1fr); gap: 11px; }
@@ -127,6 +144,14 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
     .mvm-field input { min-width: 0; font-size: 16px; }
     .fab-group { gap: 8px; padding: 0 10px; }
     .btn { min-width: 0; padding: 11px 14px; font-size: 0.8rem; }
+    .boiler-form { grid-template-columns: minmax(0, 1fr); }
+    .boiler-form .full { grid-column: auto; }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+    body { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+    .card { max-width: 100%; overflow: hidden; }
+    input, select, textarea { max-width: 100%; }
 }
 
 /* VILLANY & EGYÉB INPUTOK */
@@ -389,6 +414,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
 .pdf-export-mode #addExpenseBtn, .pdf-export-mode .del-item-btn { display: none !important; }
 .pdf-export-mode .realtime-meter { display: none !important; }
 .pdf-export-mode .coach-panel, .pdf-export-mode .help-btn { display: none !important; }
+.pdf-export-mode #boilerTab, .pdf-export-mode .tab-switcher { display: none !important; }
 
 </style>
 </head>
@@ -406,6 +432,10 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             <div class="subtitle" id="currentMonthDate">2026. JANUÁR</div>
         </div>
         <button class="refresh-btn" onclick="refreshPage(this)" title="Oldal frissítése">↻</button>
+        <div class="tab-switcher" role="tablist" aria-label="Villanyórák">
+            <button id="dayTabBtn" class="active" type="button" onclick="switchTab('day')">☀️ Nappali áram</button>
+            <button id="boilerTabBtn" type="button" onclick="switchTab('boiler')">🌙 Bojler / éjszakai</button>
+        </div>
     </div>
 
     <div class="card" id="quotaCard">
@@ -601,6 +631,56 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
             </thead>
             <tbody id="mvmHistoryBody"></tbody>
         </table>
+    </div>
+
+    <div class="app-tab" id="boilerTab" hidden>
+        <div class="card">
+            <div class="card-title"><div class="title-left"><i>🌙</i> BOJLER / ÉJSZAKAI ÁRAM</div></div>
+            <div class="boiler-summary">
+                <div class="quota-sub">Eddigi fogyasztás / éves terv</div>
+                <div class="boiler-total" id="boilerUsedDisp">–</div>
+                <div class="boiler-note" id="boilerSummaryNote">Add meg a ciklus nyitó óraállását és az első leolvasást. A B alap vezérelt tarifát külön mérőként számolja.</div>
+            </div>
+            <div class="progress-container">
+                <div class="time-marker" id="boilerTimeMarker" style="left:0%"><div class="marker-label" id="boilerMarkerLabel">MA</div></div>
+                <div class="progress-bar" id="boilerUsageBar" style="width:0%"></div>
+            </div>
+            <div class="quota-stats">
+                <div class="stat-box"><strong id="boilerTimePct">0%</strong>Idő eltelt</div>
+                <div class="stat-box"><strong id="boilerUsedPct">0%</strong>Éves terv</div>
+                <div class="stat-box"><strong id="boilerStatus">–</strong><span id="boilerStatusText">Állapot</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><div class="title-left"><i>⚙️</i> BOJLER ÉVES CIKLUS</div></div>
+            <div class="boiler-form">
+                <div class="boiler-field"><label for="boilerCycleStart">Ciklus kezdete</label><input type="date" id="boilerCycleStart" oninput="saveBoilerConfigAndRender()"></div>
+                <div class="boiler-field"><label for="boilerBaseReading">Nyitó óraállás</label><input type="text" inputmode="decimal" id="boilerBaseReading" placeholder="pl. 1250,4" oninput="saveBoilerConfigAndRender()"></div>
+                <div class="boiler-field full"><label for="boilerAnnualPlan">Várható éves bojlerfogyasztás (kWh)</label><input type="number" id="boilerAnnualPlan" placeholder="pl. 1800" oninput="saveBoilerConfigAndRender()"></div>
+            </div>
+            <div class="boiler-note">A mérőnek külön, saját 2 523 kWh/év kedvezményes kerete van. Ez nem von le a nappali mérő keretéből.</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><div class="title-left"><i>📝</i> ÚJ BOJLER-LEOLVASÁS</div></div>
+            <div class="boiler-form">
+                <div class="boiler-field"><label for="boilerReadDate">Leolvasás dátuma</label><input type="date" id="boilerReadDate" oninput="updateBoilerView()"></div>
+                <div class="boiler-field"><label for="boilerReadValue">Leolvasott óraállás</label><input type="text" inputmode="decimal" id="boilerReadValue" placeholder="pl. 1543,7" oninput="updateBoilerView()"></div>
+            </div>
+            <div class="boiler-summary" style="margin-top:13px; margin-bottom:0;">
+                <div class="boiler-note" id="boilerLiveCalc">Írd be a dátumot és az aktuálisan látott óraállást. Ezt bármikor megteheted, nem kell hónap végének lennie.</div>
+            </div>
+            <button class="boiler-action" onclick="saveBoilerReading()">💾 Leolvasás rögzítése</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><div class="title-left"><i>📚</i> BOJLER LEOLVASÁSI ELŐZMÉNYEK</div></div>
+            <div class="boiler-table-wrap"><table>
+                <thead><tr><th>Dátum</th><th style="text-align:right">Óraállás</th><th style="text-align:right">Fogyasztás</th><th style="text-align:right">Becsült költség</th><th></th></tr></thead>
+                <tbody id="boilerHistoryBody"></tbody>
+            </table></div>
+        </div>
     </div>
 </div>
 
@@ -1245,11 +1325,15 @@ function updateRealtimePreview() {
 
 let coachTextForCopy = '';
 
+function chooseCoachPhrase(options, seed) {
+    return options[Math.abs(Math.round(seed)) % options.length];
+}
+
 function buildCoachText() {
     const info = latestAnnualInsights;
-    if (!info || info.quota <= 0) return 'Még nincs elég adat az értékeléshez. Add meg az éves ciklus nyitó óraállását, majd legalább egy záró vagy aktuális leolvasást.';
+    if (!info || info.quota <= 0) return appendBoilerCoachText('Még nincs elég adat a nappali áram értékeléséhez. Add meg az éves ciklus nyitó óraállását, majd legalább egy záró vagy aktuális leolvasást.');
 
-    if (info.totalUsed === 0) return buildPreviousCycleCoachText(info.quota);
+    if (info.totalUsed === 0) return appendBoilerCoachText(buildPreviousCycleCoachText(info.quota));
 
     const elapsed = Math.max(1, info.daysPassed);
     const daysLeft = Math.max(0, info.totalDays - info.daysPassed);
@@ -1260,6 +1344,12 @@ function buildCoachText() {
     const remaining = info.quota - info.totalUsed;
     const allowedDaily = daysLeft > 0 ? Math.max(0, remaining / daysLeft) : 0;
     const ref = info.referenceDate.toLocaleDateString('hu-HU');
+    const tone = chooseCoachPhrase([
+        'Nézzük egyszerűen, mit jelent ez most neked.',
+        'A számok mögött ez a gyakorlati helyzet.',
+        'Röviden: ebből lehet most jól dönteni.',
+        'Fordítsuk le ezt hétköznapi nyelvre.'
+    ], info.totalUsed + info.daysPassed);
 
     let opening;
     if (projected <= info.quota * 0.97) {
@@ -1297,7 +1387,47 @@ function buildCoachText() {
     } else {
         tip = 'Jó úton vagy, de kevés a tartalék. A nagyobb fogyasztású napok után érdemes egy-két visszafogottabb napot tartani.';
     }
-    return `${opening}\n\n${pace}\n${dailyLine}\n${forecast}\n\n${tip}`;
+    const explanation = diff > 0
+        ? `Miért látszik figyelmeztetés? A fehér vonal azt mutatja, mennyit lenne érdemes addig a napig elfogyasztani, ha az éves ${Math.round(info.quota).toLocaleString('hu-HU')} kWh keretet egyenletesen osztanánk el. Most a fogyasztási csíkod ennél előrébb van. Ez még nem végleges baj, csak azt jelzi, hogy a következő napokban a megszokottnál takarékosabb tempó kell.`
+        : `Miért jó ez? A fogyasztási csíkod még a fehér vonal mögött van, vagyis eddig lassabban fogyasztasz, mint amit az éves terv megengedne. Ez nem azt jelenti, hogy korlátlanul lehet használni az áramot, hanem azt, hogy van egy használható biztonsági tartalékod.`;
+    const action = daysLeft > 0
+        ? `Mit érdemes most csinálnod? Nem kell minden készüléket kerülni. Inkább figyeld a nagy fogyasztókat, és a következő ${Math.min(7, Math.round(daysLeft))} napban hasonlítsd az átlagodat a ${allowedDaily.toFixed(1).replace('.', ',')} kWh/nap célhoz. Egy új leolvasás után azonnal látni fogod, javult-e az irány.`
+        : 'A következő lépés: indíts új éves ciklust az utolsó ismert óraállással, hogy a következő időszakot tisztán tudd követni.';
+    return appendBoilerCoachText(`${opening}\n\n${tone}\n${pace}\n${dailyLine}\n${forecast}\n\n${explanation}\n\n${tip}\n\n${action}`);
+}
+
+function appendBoilerCoachText(dayText) {
+    const cfg = getBoilerConfig();
+    const last = getBoilerLatestReading();
+    if (cfg.baseReading === null || !last || last.value < cfg.baseReading) return dayText;
+
+    const used = last.value - cfg.baseReading;
+    const start = new Date(cfg.startDate + 'T00:00:00');
+    const end = getBoilerCycleEnd(cfg.startDate);
+    const ref = new Date(last.date + 'T00:00:00');
+    const totalDays = (end - start) / 86400000;
+    const elapsed = Math.max(0, Math.min(totalDays, (ref - start) / 86400000));
+    const plan = cfg.annualPlan || BOILER_DISCOUNT_LIMIT;
+    const expected = plan * (elapsed / totalDays);
+    const diff = used - expected;
+    const cost = calculateBoilerCost(used, cfg.startDate, last.date);
+    const daily = elapsed > 0 ? used / elapsed : 0;
+    const projected = daily * totalDays;
+    const remainingDays = Math.max(0, totalDays - elapsed);
+    const dailyTarget = remainingDays > 0 ? Math.max(0, (plan - used) / remainingDays) : 0;
+    const overLimit = Math.max(0, used - cost.limit);
+
+    const opening = diff <= 0
+        ? `A bojler külön is jól áll: az utolsó, ${fmtDateHu(ref)}-i leolvasás alapján ${Math.round(Math.abs(diff)).toLocaleString('hu-HU')} kWh-val az éves tempó alatt vagy.`
+        : `A bojler most gyorsabban fogyaszt a tervezettnél: ${Math.round(diff).toLocaleString('hu-HU')} kWh-val az időarányos cél fölött van.`;
+    const costLine = `A ciklusban eddig ${Math.round(used).toLocaleString('hu-HU')} kWh ment el, ennek becsült B alap költsége ${cost.total.toLocaleString('hu-HU')} Ft. Ebből ${Math.round(cost.discountPart).toLocaleString('hu-HU')} kWh kedvezményes áron számolódik${overLimit ? `, és ${Math.round(overLimit).toLocaleString('hu-HU')} kWh már a magasabb piaci sávba esik` : ''}.`;
+    const direction = remainingDays > 0
+        ? `Ha a bojler így fogy tovább, a ciklus végére kb. ${Math.round(projected).toLocaleString('hu-HU')} kWh várható. A ${Math.round(plan).toLocaleString('hu-HU')} kWh-s saját tervedhez a hátralévő napokban nagyjából ${dailyTarget.toFixed(1).replace('.', ',')} kWh/nap átlag fér bele.`
+        : 'A bojler éves ciklusa lezárult; a következő leolvasással érdemes új ciklust indítani.';
+    const advice = diff <= 0
+        ? 'Összképben ez megnyugtató: a bojler nem rontja el a nappali oldalon látott eredményt. Elég időnként, például hetente vagy amikor eszedbe jut, egy új állást elmenteni.'
+        : 'Itt elsősorban a melegvíz-használat és a bojler beállítása számíthat. Nem kell azonnal változtatni, de a következő néhány leolvasással érdemes ellenőrizni, hogy visszatér-e a napi átlag a cél közelébe.';
+    return `${dayText}\n\n🌙 BOJLER / ÉJSZAKAI ÁRAM\n${opening}\n${costLine}\n${direction}\n${advice}`;
 }
 
 function buildPreviousCycleCoachText(defaultQuota) {
@@ -1363,6 +1493,190 @@ function fallbackCopyCoachText(text, done) {
     document.execCommand('copy');
     area.remove();
     done();
+}
+
+/* ================================================================= */
+/* BOJLER / B ALAP - külön mérő, külön mentés                      */
+/* ================================================================= */
+const BOILER_DISCOUNT_LIMIT = 2523;
+const BOILER_DISCOUNT_PRICE = 27.4703; // 2026 B alap, ÉMÁSZ terület: bruttó Ft/kWh
+const BOILER_MARKET_PRICE = 60.935;    // 2026 B alap lakossági piaci ár: bruttó Ft/kWh
+const BOILER_MONTHLY_FIXED = 50.165;   // 2026 B alap alapdíj: bruttó Ft/hó
+let boilerHistory = JSON.parse(localStorage.getItem('boiler_history_v1')) || [];
+
+function getBoilerConfig() {
+    const saved = JSON.parse(localStorage.getItem('boiler_config_v1')) || {};
+    return {
+        startDate: saved.startDate || '2026-08-01',
+        baseReading: saved.baseReading === undefined ? null : saved.baseReading,
+        annualPlan: saved.annualPlan === undefined ? null : saved.annualPlan
+    };
+}
+
+function saveBoilerConfig(config) {
+    localStorage.setItem('boiler_config_v1', JSON.stringify(config));
+}
+
+function loadBoilerConfigToUI() {
+    const cfg = getBoilerConfig();
+    document.getElementById('boilerCycleStart').value = cfg.startDate;
+    document.getElementById('boilerBaseReading').value = meterToInput(cfg.baseReading);
+    document.getElementById('boilerAnnualPlan').value = cfg.annualPlan === null ? '' : cfg.annualPlan;
+}
+
+function saveBoilerConfigAndRender() {
+    const current = getBoilerConfig();
+    const startDate = document.getElementById('boilerCycleStart').value || current.startDate;
+    const baseReading = cleanNumStr(document.getElementById('boilerBaseReading').value);
+    const annualPlan = Number(document.getElementById('boilerAnnualPlan').value);
+    saveBoilerConfig({
+        startDate,
+        baseReading: isNaN(baseReading) ? null : baseReading,
+        annualPlan: isNaN(annualPlan) || annualPlan <= 0 ? null : annualPlan
+    });
+    updateBoilerView();
+}
+
+function getBoilerCycleEnd(startDate) {
+    const start = new Date(startDate + 'T00:00:00');
+    return new Date(start.getFullYear() + 1, start.getMonth(), start.getDate());
+}
+
+function calculateBoilerCost(consumption, startDate, endDate) {
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T00:00:00');
+    const days = Math.max(0, Math.min(365, Math.round((end - start) / 86400000)));
+    const limit = Math.round((BOILER_DISCOUNT_LIMIT / 365) * days);
+    const discountPart = Math.min(Math.max(0, consumption), limit);
+    const marketPart = Math.max(0, consumption - discountPart);
+    const fixedPart = BOILER_MONTHLY_FIXED * (days / 365) * 12;
+    return {
+        total: Math.round(discountPart * BOILER_DISCOUNT_PRICE + marketPart * BOILER_MARKET_PRICE + fixedPart),
+        limit, discountPart, marketPart, days
+    };
+}
+
+function getBoilerSortedHistory() {
+    return [...boilerHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+function getBoilerLatestReading(beforeDate) {
+    const before = beforeDate ? new Date(beforeDate + 'T23:59:59') : null;
+    let latest = null;
+    boilerHistory.forEach(row => {
+        const date = new Date(row.date + 'T00:00:00');
+        if ((!before || date <= before) && (!latest || date > new Date(latest.date + 'T00:00:00'))) latest = row;
+    });
+    return latest;
+}
+
+function updateBoilerView() {
+    const cfg = getBoilerConfig();
+    const selectedDate = document.getElementById('boilerReadDate').value || formatLocalDate(new Date());
+    const inputValue = cleanNumStr(document.getElementById('boilerReadValue').value);
+    const latest = !isNaN(inputValue) ? { date: selectedDate, value: inputValue } : getBoilerLatestReading();
+    const summary = document.getElementById('boilerSummaryNote');
+    const usedDisp = document.getElementById('boilerUsedDisp');
+    const liveCalc = document.getElementById('boilerLiveCalc');
+    const plan = cfg.annualPlan || BOILER_DISCOUNT_LIMIT;
+
+    if (cfg.baseReading === null || !latest || latest.value < cfg.baseReading) {
+        usedDisp.innerText = cfg.annualPlan ? `0 / ${Math.round(cfg.annualPlan).toLocaleString('hu-HU')} kWh` : '–';
+        summary.innerText = 'Add meg a ciklus nyitó óraállását és az első leolvasást. A bojler mérő külön keretet kap.';
+        liveCalc.innerText = 'Írd be a dátumot és az aktuálisan látott óraállást. Ezt bármikor elmentheted, nem kell hónap végének lennie.';
+        setBoilerProgress(0, 0, plan, 0, false);
+        renderBoilerHistory();
+        return;
+    }
+
+    const used = latest.value - cfg.baseReading;
+    const cycleStart = new Date(cfg.startDate + 'T00:00:00');
+    const cycleEnd = getBoilerCycleEnd(cfg.startDate);
+    const reference = new Date(latest.date + 'T00:00:00');
+    const totalDays = (cycleEnd - cycleStart) / 86400000;
+    const daysPassed = Math.max(0, Math.min(totalDays, (reference - cycleStart) / 86400000));
+    const expected = plan * (daysPassed / totalDays);
+    const cost = calculateBoilerCost(used, cfg.startDate, latest.date);
+    const diff = used - expected;
+    const daily = daysPassed > 0 ? used / daysPassed : 0;
+    const predicted = daily * totalDays;
+    const nowLabel = fmtDateHu(reference);
+    usedDisp.innerText = `${Math.round(used).toLocaleString('hu-HU')} / ${Math.round(plan).toLocaleString('hu-HU')} kWh`;
+    summary.innerText = `${nowLabel}-i állás alapján becsült eddigi B alap költség: ${cost.total.toLocaleString('hu-HU')} Ft. Ebből ${Math.round(cost.discountPart).toLocaleString('hu-HU')} kWh kedvezményes, ${Math.round(cost.marketPart).toLocaleString('hu-HU')} kWh piaci sáv.`;
+    liveCalc.innerText = `Az aktuális leolvasás a nyitóhoz képest ${fmtKwh(used)}. Ha most rögzíted, bekerül az előzményekbe, és ez lesz a következő összehasonlítás alapja.`;
+    setBoilerProgress(used, expected, plan, daysPassed / totalDays, diff > 0);
+    renderBoilerHistory();
+}
+
+function setBoilerProgress(used, expected, plan, timeFraction, warning) {
+    const usagePct = Math.min(100, Math.max(0, (used / plan) * 100));
+    const timePct = Math.min(100, Math.max(0, timeFraction * 100));
+    document.getElementById('boilerUsageBar').style.width = usagePct + '%';
+    document.getElementById('boilerUsageBar').classList.toggle('warning', warning);
+    document.getElementById('boilerTimeMarker').style.left = timePct + '%';
+    document.getElementById('boilerMarkerLabel').innerText = `LEOLVASÁS (${Math.round(timePct)}%)`;
+    document.getElementById('boilerTimePct').innerText = Math.round(timePct) + '%';
+    document.getElementById('boilerUsedPct').innerText = Math.round(usagePct) + '%';
+    const diff = used - expected;
+    const status = document.getElementById('boilerStatus');
+    const statusText = document.getElementById('boilerStatusText');
+    if (used === 0) { status.innerText = '–'; statusText.innerText = 'Várakozás adatra'; return; }
+    status.innerText = `${diff > 0 ? '+' : ''}${Math.round(diff).toLocaleString('hu-HU')} kWh`;
+    status.className = `stat-status ${diff > 0 ? 'status-bad' : 'status-good'}`;
+    statusText.innerText = diff > 0 ? 'Gyorsabb tempó' : 'Van tartalék';
+}
+
+function saveBoilerReading() {
+    const cfg = getBoilerConfig();
+    const date = document.getElementById('boilerReadDate').value;
+    const value = cleanNumStr(document.getElementById('boilerReadValue').value);
+    if (cfg.baseReading === null) { alert('Előbb add meg a bojler éves ciklus nyitó óraállását.'); return; }
+    if (!date || isNaN(value)) { alert('Add meg a leolvasás dátumát és az óraállást.'); return; }
+    if (date < cfg.startDate || value < cfg.baseReading) { alert('A leolvasás nem lehet a ciklus kezdete előtti, és az óraállás nem lehet kisebb a nyitó értéknél.'); return; }
+    if (boilerHistory.some(row => row.date === date)) {
+        if (!confirm('Erre a napra már van mentett bojler-leolvasás. Lecseréled az új értékre?')) return;
+        boilerHistory = boilerHistory.filter(row => row.date !== date);
+    }
+    boilerHistory.push({ date, value });
+    localStorage.setItem('boiler_history_v1', JSON.stringify(boilerHistory));
+    document.getElementById('boilerReadValue').value = '';
+    updateBoilerView();
+    alert('Bojler-leolvasás sikeresen rögzítve.');
+}
+
+function deleteBoilerReading(index) {
+    if (!confirm('Biztosan törlöd ezt a bojler-leolvasást?')) return;
+    const sorted = getBoilerSortedHistory();
+    const row = sorted[index];
+    boilerHistory = boilerHistory.filter(item => !(item.date === row.date && item.value === row.value));
+    localStorage.setItem('boiler_history_v1', JSON.stringify(boilerHistory));
+    updateBoilerView();
+}
+
+function renderBoilerHistory() {
+    const body = document.getElementById('boilerHistoryBody');
+    body.innerHTML = '';
+    const cfg = getBoilerConfig();
+    const rows = getBoilerSortedHistory();
+    if (!rows.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8">Még nincs mentett bojler-leolvasás.</td></tr>'; return; }
+    rows.forEach((row, index) => {
+        const previousValue = index === 0 ? cfg.baseReading : rows[index - 1].value;
+        const previousCost = index === 0 ? 0 : calculateBoilerCost(rows[index - 1].value - cfg.baseReading, cfg.startDate, rows[index - 1].date).total;
+        const cumulativeCost = calculateBoilerCost(row.value - cfg.baseReading, cfg.startDate, row.date).total;
+        const intervalUse = previousValue === null ? null : row.value - previousValue;
+        body.innerHTML += `<tr><td>${fmtDateHu(new Date(row.date + 'T00:00:00'))}</td><td style="text-align:right">${row.value.toLocaleString('hu-HU')} kWh</td><td style="text-align:right">${intervalUse === null ? '–' : fmtKwh(intervalUse)}</td><td style="text-align:right">${(cumulativeCost - previousCost).toLocaleString('hu-HU')} Ft</td><td class="del-col"><button class="del-btn" onclick="deleteBoilerReading(${index})">🗑️</button></td></tr>`;
+    });
+}
+
+function switchTab(name) {
+    const boiler = name === 'boiler';
+    document.querySelectorAll('#contentToShare > .card').forEach(card => { card.hidden = boiler; });
+    document.querySelector('.fab-group').hidden = boiler;
+    document.getElementById('boilerTab').hidden = !boiler;
+    document.getElementById('dayTabBtn').classList.toggle('active', !boiler);
+    document.getElementById('boilerTabBtn').classList.toggle('active', boiler);
+    localStorage.setItem('active_energy_tab_v1', boiler ? 'boiler' : 'day');
+    if (boiler) updateBoilerView(); else updateTable();
 }
 
 function onBillMonthChange() {
@@ -1613,6 +1927,9 @@ renderExpenseList();
 loadCycleConfigToUI();
 renderCycleInfo();
 updateTable(); 
+loadBoilerConfigToUI();
+document.getElementById('boilerReadDate').value = formatLocalDate(new Date());
+switchTab(localStorage.getItem('active_energy_tab_v1') === 'boiler' ? 'boiler' : 'day');
 
 </script>
 </body>
