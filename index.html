@@ -44,6 +44,7 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .tab-switcher button { flex: 1; min-width: 0; padding: 9px 7px; border: 1px solid transparent; border-radius: 8px; color: var(--dim); background: transparent; font-size: 0.77rem; font-weight: 800; cursor: pointer; }
 .tab-switcher button.active { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.55); color: #dbeafe; }
 .app-tab[hidden] { display: none !important; }
+.fab-group[hidden] { display: none !important; }
 
 /* KÁRTYÁK */
 .card {
@@ -328,6 +329,11 @@ input[type="month"] { color-scheme: dark; font-family: 'Inter', sans-serif; text
         font-size: 16px !important;
     }
     .mvm-field-hint { min-height: auto; overflow-wrap: anywhere; }
+    /* A keskeny mobiloknál a natív hónapmező se lóghasson a jobb szélre. */
+    #contentToShare, #contentToShare > .card, .mvm-mini { max-width: 100% !important; box-sizing: border-box !important; }
+    .mvm-mini { width: calc(100% - 2px) !important; margin-right: 2px !important; }
+    .mvm-mini .mvm-field, .mvm-mini .mvm-field input { box-sizing: border-box !important; }
+    .mvm-mini .mvm-field input { width: calc(100% - 1px) !important; margin-right: 1px; }
 }
 
 /* TÁBLÁZAT */
@@ -669,6 +675,8 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
                 <div class="boiler-field"><label for="boilerReadValue">Leolvasott óraállás</label><input type="text" inputmode="decimal" id="boilerReadValue" placeholder="pl. 1543,7" oninput="updateBoilerView()"></div>
             </div>
             <div class="boiler-summary" style="margin-top:13px; margin-bottom:0;">
+                <div class="mvm-stat-row"><span>Fogyasztás a nyitótól:</span><strong id="boilerLiveCons">0,000 kWh</strong></div>
+                <div class="mvm-stat-row"><span>Becsült eddigi ár:</span><strong class="stat-main" id="boilerLiveCost">0 Ft</strong></div>
                 <div class="boiler-note" id="boilerLiveCalc">Írd be a dátumot és az aktuálisan látott óraállást. Ezt bármikor megteheted, nem kell hónap végének lennie.</div>
             </div>
             <button class="boiler-action" onclick="saveBoilerReading()">💾 Leolvasás rögzítése</button>
@@ -677,7 +685,7 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
         <div class="card">
             <div class="card-title"><div class="title-left"><i>📚</i> BOJLER LEOLVASÁSI ELŐZMÉNYEK</div></div>
             <div class="boiler-table-wrap"><table>
-                <thead><tr><th>Dátum</th><th style="text-align:right">Óraállás</th><th style="text-align:right">Fogyasztás</th><th style="text-align:right">Becsült költség</th><th></th></tr></thead>
+                <thead><tr><th>Leolvasás dátuma</th><th style="text-align:right">Óraállás</th><th style="text-align:right">Fogyasztás az előző óta</th><th style="text-align:right">Részlet & becsült ár</th><th></th></tr></thead>
                 <tbody id="boilerHistoryBody"></tbody>
             </table></div>
         </div>
@@ -1578,12 +1586,16 @@ function updateBoilerView() {
     const summary = document.getElementById('boilerSummaryNote');
     const usedDisp = document.getElementById('boilerUsedDisp');
     const liveCalc = document.getElementById('boilerLiveCalc');
+    const liveCons = document.getElementById('boilerLiveCons');
+    const liveCost = document.getElementById('boilerLiveCost');
     const plan = cfg.annualPlan || BOILER_DISCOUNT_LIMIT;
 
     if (cfg.baseReading === null || !latest || latest.value < cfg.baseReading) {
         usedDisp.innerText = cfg.annualPlan ? `0 / ${Math.round(cfg.annualPlan).toLocaleString('hu-HU')} kWh` : '–';
         summary.innerText = 'Add meg a ciklus nyitó óraállását és az első leolvasást. A bojler mérő külön keretet kap.';
         liveCalc.innerText = 'Írd be a dátumot és az aktuálisan látott óraállást. Ezt bármikor elmentheted, nem kell hónap végének lennie.';
+        liveCons.innerText = '0,000 kWh';
+        liveCost.innerText = '0 Ft';
         setBoilerProgress(0, 0, plan, 0, false);
         renderBoilerHistory();
         return;
@@ -1603,7 +1615,9 @@ function updateBoilerView() {
     const nowLabel = fmtDateHu(reference);
     usedDisp.innerText = `${Math.round(used).toLocaleString('hu-HU')} / ${Math.round(plan).toLocaleString('hu-HU')} kWh`;
     summary.innerText = `${nowLabel}-i állás alapján becsült eddigi B alap költség: ${cost.total.toLocaleString('hu-HU')} Ft. Ebből ${Math.round(cost.discountPart).toLocaleString('hu-HU')} kWh kedvezményes, ${Math.round(cost.marketPart).toLocaleString('hu-HU')} kWh piaci sáv.`;
-    liveCalc.innerText = `Az aktuális leolvasás a nyitóhoz képest ${fmtKwh(used)}. Ha most rögzíted, bekerül az előzményekbe, és ez lesz a következő összehasonlítás alapja.`;
+    liveCons.innerText = fmtKwh(used);
+    liveCost.innerText = `${cost.total.toLocaleString('hu-HU')} Ft`;
+    liveCalc.innerText = `Az aktuális leolvasás a nyitóhoz képest ${fmtKwh(used)}. Kedvezményes keret: ${Math.round(cost.limit).toLocaleString('hu-HU')} kWh erre az időszakra. Ha most rögzíted, bekerül az előzményekbe, és ez lesz a következő összehasonlítás alapja.`;
     setBoilerProgress(used, expected, plan, daysPassed / totalDays, diff > 0);
     renderBoilerHistory();
 }
@@ -1637,6 +1651,7 @@ function saveBoilerReading() {
         if (!confirm('Erre a napra már van mentett bojler-leolvasás. Lecseréled az új értékre?')) return;
         boilerHistory = boilerHistory.filter(row => row.date !== date);
     }
+    if (!confirm(`Rögzíted a bojler leolvasását?\n\nDátum: ${date}\nÓraállás: ${value.toLocaleString('hu-HU')} kWh\n\nKésőbb a listából törölhető.`)) return;
     boilerHistory.push({ date, value });
     localStorage.setItem('boiler_history_v1', JSON.stringify(boilerHistory));
     document.getElementById('boilerReadValue').value = '';
@@ -1662,9 +1677,13 @@ function renderBoilerHistory() {
     rows.forEach((row, index) => {
         const previousValue = index === 0 ? cfg.baseReading : rows[index - 1].value;
         const previousCost = index === 0 ? 0 : calculateBoilerCost(rows[index - 1].value - cfg.baseReading, cfg.startDate, rows[index - 1].date).total;
-        const cumulativeCost = calculateBoilerCost(row.value - cfg.baseReading, cfg.startDate, row.date).total;
+        const cumulative = calculateBoilerCost(row.value - cfg.baseReading, cfg.startDate, row.date);
+        const cumulativeCost = cumulative.total;
         const intervalUse = previousValue === null ? null : row.value - previousValue;
-        body.innerHTML += `<tr><td>${fmtDateHu(new Date(row.date + 'T00:00:00'))}</td><td style="text-align:right">${row.value.toLocaleString('hu-HU')} kWh</td><td style="text-align:right">${intervalUse === null ? '–' : fmtKwh(intervalUse)}</td><td style="text-align:right">${(cumulativeCost - previousCost).toLocaleString('hu-HU')} Ft</td><td class="del-col"><button class="del-btn" onclick="deleteBoilerReading(${index})">🗑️</button></td></tr>`;
+        const detail = cumulative.marketPart > 0
+            ? `Kedvezményes: ${Math.round(cumulative.discountPart).toLocaleString('hu-HU')} kWh<br><span class="breakdown-over">Piaci: ${Math.round(cumulative.marketPart).toLocaleString('hu-HU')} kWh</span>`
+            : `Kedvezményes: ${Math.round(cumulative.discountPart).toLocaleString('hu-HU')} kWh`;
+        body.innerHTML += `<tr><td>${fmtDateHu(new Date(row.date + 'T00:00:00'))}</td><td style="text-align:right">${row.value.toLocaleString('hu-HU')} kWh</td><td style="text-align:right">${intervalUse === null ? '–' : fmtKwh(intervalUse)}</td><td class="cost-col"><strong>${(cumulativeCost - previousCost).toLocaleString('hu-HU')} Ft</strong><span class="breakdown-text">${detail}</span></td><td class="del-col"><button class="del-btn" onclick="deleteBoilerReading(${index})">🗑️</button></td></tr>`;
     });
 }
 
