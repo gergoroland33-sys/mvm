@@ -122,6 +122,8 @@ h1 { margin: 0; font-size: 1.6rem; font-weight: 900; background: linear-gradient
 .boiler-field { min-width: 0; display: flex; flex-direction: column; }
 .boiler-field label { color: var(--dim); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
 .boiler-field input { width: 100%; min-width: 0; padding: 11px; border-radius: 9px; border: 1px solid var(--border); background: rgba(0,0,0,0.22); color: white; box-sizing: border-box; font: inherit; font-weight: 800; }
+.boiler-field input:disabled { color: #bfdbfe; background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.45); cursor: not-allowed; }
+.boiler-cycle-hint { display: block; min-height: 16px; margin-top: 9px; color: var(--dim); font-size: 0.7rem; line-height: 1.35; }
 .boiler-action { width: 100%; margin-top: 13px; padding: 12px; border-radius: 9px; border: 1px solid rgba(16,185,129,0.65); background: rgba(16,185,129,0.13); color: #a7f3d0; font-weight: 900; cursor: pointer; }
 .boiler-action.secondary { border-color: var(--border); background: rgba(255,255,255,0.05); color: var(--text); }
 .boiler-table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -756,12 +758,16 @@ td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); color: 
         </div>
 
         <div class="card">
-            <div class="card-title"><div class="title-left"><i>⚙️</i> BOJLER ÉVES CIKLUS</div></div>
+            <div class="card-title">
+                <div class="title-left"><i>⚙️</i> BOJLER ÉVES CIKLUS</div>
+                <button class="edit-btn" id="boilerCycleLockBtn" onclick="toggleBoilerCycleLock()"><span>🔒 FIXÁLVA</span></button>
+            </div>
             <div class="boiler-form">
                 <div class="boiler-field"><label for="boilerCycleStart">Ciklus kezdete</label><input type="date" id="boilerCycleStart" oninput="saveBoilerConfigAndRender()"></div>
                 <div class="boiler-field"><label for="boilerBaseReading">Nyitó óraállás</label><input type="text" inputmode="decimal" id="boilerBaseReading" placeholder="pl. 1250,4" oninput="saveBoilerConfigAndRender()"></div>
                 <div class="boiler-field full"><label for="boilerAnnualPlan">Várható éves bojlerfogyasztás (kWh)</label><input type="number" id="boilerAnnualPlan" placeholder="pl. 1800" oninput="saveBoilerConfigAndRender()"></div>
             </div>
+            <span class="boiler-cycle-hint" id="boilerBaseHint"></span>
             <div class="boiler-note">A mérőnek külön, saját 2 523 kWh/év kedvezményes kerete van. Ez nem von le a nappali mérő keretéből.</div>
         </div>
 
@@ -1605,17 +1611,20 @@ function fallbackCopyCoachText(text, done) {
 /* BOJLER / B ALAP - külön mérő, külön mentés                      */
 /* ================================================================= */
 const BOILER_DISCOUNT_LIMIT = 2523;
-const BOILER_DISCOUNT_PRICE = 27.4703; // 2026 B alap, ÉMÁSZ terület: bruttó Ft/kWh
+const BOILER_DISCOUNT_PRICE = 22.682;  // Lakossági B alap, MVM Émász terület: bruttó Ft/kWh
 const BOILER_MARKET_PRICE = 60.935;    // 2026 B alap lakossági piaci ár: bruttó Ft/kWh
 const BOILER_MONTHLY_FIXED = 50.165;   // 2026 B alap alapdíj: bruttó Ft/hó
 let boilerHistory = JSON.parse(localStorage.getItem('boiler_history_v1')) || [];
 
 function getBoilerConfig() {
     const saved = JSON.parse(localStorage.getItem('boiler_config_v1')) || {};
+    const hasCompleteLegacyCycle = !!saved.startDate && saved.baseReading !== undefined && saved.baseReading !== null && Number(saved.annualPlan) > 0;
     return {
         startDate: saved.startDate || '2026-08-01',
         baseReading: saved.baseReading === undefined ? null : saved.baseReading,
-        annualPlan: saved.annualPlan === undefined ? null : saved.annualPlan
+        annualPlan: saved.annualPlan === undefined ? null : saved.annualPlan,
+        // A korábban már teljesen kitöltött bojlerciklust biztonságból fixnek tekintjük.
+        locked: saved.locked === undefined ? hasCompleteLegacyCycle : !!saved.locked
     };
 }
 
@@ -1628,6 +1637,7 @@ function loadBoilerConfigToUI() {
     document.getElementById('boilerCycleStart').value = cfg.startDate;
     document.getElementById('boilerBaseReading').value = meterToInput(cfg.baseReading);
     document.getElementById('boilerAnnualPlan').value = cfg.annualPlan === null ? '' : cfg.annualPlan;
+    applyBoilerCycleLockState(cfg.locked);
 }
 
 function saveBoilerConfigAndRender() {
@@ -1638,9 +1648,61 @@ function saveBoilerConfigAndRender() {
     saveBoilerConfig({
         startDate,
         baseReading: isNaN(baseReading) ? null : baseReading,
-        annualPlan: isNaN(annualPlan) || annualPlan <= 0 ? null : annualPlan
+        annualPlan: isNaN(annualPlan) || annualPlan <= 0 ? null : annualPlan,
+        locked: false
     });
     updateBoilerView();
+}
+
+function applyBoilerCycleLockState(locked) {
+    const inputs = ['boilerCycleStart', 'boilerBaseReading', 'boilerAnnualPlan'].map(id => document.getElementById(id));
+    const btn = document.getElementById('boilerCycleLockBtn');
+    const hint = document.getElementById('boilerBaseHint');
+    inputs.forEach(input => input.disabled = locked);
+
+    if (locked) {
+        btn.innerHTML = '<span>🔒 FIXÁLVA</span>';
+        btn.classList.remove('active');
+        hint.innerText = 'A ciklus adatai védve vannak. Módosításhoz nyisd fel a szerkesztést.';
+    } else {
+        btn.innerHTML = '<span>🔓 SZERKESZTÉS</span>';
+        btn.classList.add('active');
+        const latest = getBoilerLatestReading();
+        hint.innerText = latest ? `Utolsó rögzített bojleróraállás: ${latest.value.toLocaleString('hu-HU')} kWh` : 'Még nincs rögzített bojler-leolvasás.';
+    }
+}
+
+function toggleBoilerCycleLock() {
+    const cfg = getBoilerConfig();
+    if (cfg.locked) {
+        cfg.locked = false;
+        saveBoilerConfig(cfg);
+        applyBoilerCycleLockState(false);
+        return;
+    }
+    commitBoilerCycleFromUI(true);
+}
+
+function commitBoilerCycleFromUI(lock) {
+    const startDate = document.getElementById('boilerCycleStart').value;
+    const baseRaw = document.getElementById('boilerBaseReading').value;
+    const baseReading = cleanNumStr(baseRaw);
+    const annualPlan = Number(document.getElementById('boilerAnnualPlan').value);
+
+    if (!startDate) { alert('Add meg a bojler éves ciklusának kezdő dátumát!'); return false; }
+    if (lock && (baseRaw.trim() === '' || isNaN(baseReading))) {
+        if (!confirm('A nyitó óraállás üres. Enélkül a bojler kerete nem tud pontosan számolni. Mégis fixálod?')) return false;
+    }
+
+    const cfg = getBoilerConfig();
+    cfg.startDate = startDate;
+    cfg.baseReading = (baseRaw.trim() === '' || isNaN(baseReading)) ? null : baseReading;
+    cfg.annualPlan = isNaN(annualPlan) || annualPlan <= 0 ? null : annualPlan;
+    cfg.locked = !!lock;
+    saveBoilerConfig(cfg);
+    applyBoilerCycleLockState(cfg.locked);
+    updateBoilerView();
+    return true;
 }
 
 function getBoilerCycleEnd(startDate) {
